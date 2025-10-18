@@ -1,0 +1,57 @@
+{% extends 'dashboard/base.html' %}
+{% block content %}
+<div class="space-y-6">
+
+  <div class="flex justify-between items-center">
+    <h1 class="text-2xl font-bold">{{ dashboard_title }}</h1>
+
+    {% if user.is_superuser or role in 'admin,finance_officer' %}
+    <a href="{% url 'policies:add_policy' %}"
+       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+      ➕ Add Policy
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- Policies Table -->
+  <div class="overflow-x-auto bg-white rounded-xl shadow">
+    <table class="min-w-full table-auto text-sm">
+      <thead class="bg-gray-100">
+        <tr class="text-left text-gray-600">
+          <th class="px-6 py-3">Policy #</th>
+          <th class="px-6 py-3">Client</th>
+          <th class="px-6 py-3">Type</th>
+          <th class="px-6 py-3">Premium</th>
+          <th class="px-6 py-3">Status</th>
+          <th class="px-6 py-3">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for policy in policies %}
+        <tr class="border-t hover:bg-gray-50">
+          <td class="px-6 py-3 font-medium text-gray-800">{{ policy.policy_number }}</td>
+          <td class="px-6 py-3">{{ policy.client }}</td>
+          <td class="px-6 py-3">{{ policy.type }}</td>
+          <td class="px-6 py-3">${{ policy.premium }}</td>
+          <td class="px-6 py-3">
+            {% if policy.active %}
+            <span class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full">Active</span>
+            {% else %}
+            <span class="px-2 py-1 text-xs bg-red-100 text-red-700 rounded-full">Inactive</span>
+            {% endif %}
+          </td>
+          <td class="px-6 py-3">
+            <a href="{% url 'policies:policy_detail' policy.id %}"
+               class="text-blue-600 hover:underline">View</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center text-gray-500 py-6">No policies found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

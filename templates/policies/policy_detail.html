@@ -1,0 +1,42 @@
+{% extends 'dashboard/base.html' %}
+{% block content %}
+<div class="max-w-4xl mx-auto bg-white shadow-lg rounded-xl p-8 space-y-6">
+  <h1 class="text-2xl font-bold text-gray-800 mb-4">Policy Details</h1>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div>
+      <p class="text-gray-600">Policy Number:</p>
+      <p class="font-semibold text-gray-800">{{ policy.policy_number }}</p>
+    </div>
+
+    <div>
+      <p class="text-gray-600">Client:</p>
+      <p class="font-semibold text-gray-800">{{ policy.client }}</p>
+    </div>
+
+    <div>
+      <p class="text-gray-600">Type:</p>
+      <p class="font-semibold text-gray-800">{{ policy.type }}</p>
+    </div>
+
+    <div>
+      <p class="text-gray-600">Premium:</p>
+      <p class="font-semibold text-gray-800">${{ policy.premium }}</p>
+    </div>
+
+    <div>
+      <p class="text-gray-600">Status:</p>
+      {% if policy.active %}
+      <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">Active</span>
+      {% else %}
+      <span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm">Inactive</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="flex justify-end mt-6">
+    <a href="{% url 'policies:policy_list' %}"
+       class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Back to List</a>
+  </div>
+</div>
+{% endblock %}

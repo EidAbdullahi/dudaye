@@ -1,0 +1,72 @@
+{% extends 'dashboard/base.html' %}
+{% block content %}
+<div class="max-w-7xl mx-auto bg-white shadow-lg rounded-xl p-6">
+
+  <h1 class="text-2xl font-bold text-gray-800 mb-6">{{ dashboard_title }}</h1>
+
+  <!-- Add Hospital Button (Admin / Finance) -->
+  {% if role in "admin,finance_officer" or user.is_superuser %}
+    <div class="mb-4">
+      <a href="{% url 'hospitals:add_hospital' %}"
+         class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+        + Add New Hospital
+      </a>
+    </div>
+  {% endif %}
+
+  <div class="overflow-x-auto">
+    <table class="min-w-full table-auto border border-gray-200 rounded-lg overflow-hidden">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="px-4 py-2 text-left">#</th>
+          <th class="px-4 py-2 text-left">Name</th>
+          <th class="px-4 py-2 text-left">Owner</th>
+          <th class="px-4 py-2 text-left">Email</th>
+          <th class="px-4 py-2 text-left">Mobile</th>
+          <th class="px-4 py-2 text-left">Phone</th>
+          <th class="px-4 py-2 text-left">City</th>
+          <th class="px-4 py-2 text-left">Verified</th>
+          <th class="px-4 py-2 text-left">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        {% for hospital in hospitals %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-2">{{ forloop.counter }}</td>
+          <td class="px-4 py-2">{{ hospital.name }}</td>
+          <td class="px-4 py-2">{{ hospital.owner_first_name }} {{ hospital.owner_last_name }}</td>
+          <td class="px-4 py-2">{{ hospital.email }}</td>
+          <td class="px-4 py-2">{{ hospital.mobile|default:"-" }}</td>
+          <td class="px-4 py-2">{{ hospital.phone|default:"-" }}</td>
+          <td class="px-4 py-2">{{ hospital.city|default:"-" }}</td>
+          <td class="px-4 py-2">
+            {% if hospital.verified %}
+              <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Verified</span>
+            {% else %}
+              <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">Pending</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-2 space-x-2">
+            <a href="{% url 'hospitals:hospital_detail' hospital.id %}"
+               class="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm">View</a>
+
+            {% if role in "admin,finance_officer" or user.is_superuser %}
+              <a href="{% url 'hospitals:add_hospital' %}?edit={{ hospital.id }}"
+                 class="px-2 py-1 bg-blue-200 rounded hover:bg-blue-300 text-sm">Edit</a>
+              {% if not hospital.verified %}
+                <a href="{% url 'hospitals:verify_hospital' hospital.id %}"
+                   class="px-2 py-1 bg-green-200 rounded hover:bg-green-300 text-sm">Verify</a>
+              {% endif %}
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9" class="px-4 py-6 text-center text-gray-500">No hospitals found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

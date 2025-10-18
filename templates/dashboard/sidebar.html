@@ -1,0 +1,22 @@
+<div class="space-y-4">
+  <a href="{% url 'dashboard' %}" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded-lg">
+    <i data-lucide="home" class="w-5 h-5"></i> Dashboard
+  </a>
+  {% if user.role == 'admin' %}
+  <a href="/dashboard/clients/" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded-lg">
+    <i data-lucide="users" class="w-5 h-5"></i> Clients
+  </a>
+  <a href="/dashboard/policies/" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded-lg">
+    <i data-lucide="file-text" class="w-5 h-5"></i> Policies
+  </a>
+  <a href="/dashboard/claims/" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded-lg">
+    <i data-lucide="clipboard" class="w-5 h-5"></i> Claims
+  </a>
+  <a href="/dashboard/hospitals/" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded-lg">
+    <i data-lucide="home" class="w-5 h-5"></i> Hospitals
+  </a>
+  <a href="/accounts/users/" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded-lg">
+    <i data-lucide="user-check" class="w-5 h-5"></i> Users
+  </a>
+  {% endif %}
+</div>
