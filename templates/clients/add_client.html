@@ -1,65 +1,94 @@
 {% extends 'dashboard/base.html' %}
-{% load static %}
-
-{% block title %}Add New Client | Health Insurance{% endblock %}
+{% load widget_tweaks %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto p-6 bg-white rounded-xl shadow-lg mt-8">
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg rounded-4 border-0">
+                <div class="card-header bg-gradient-primary text-white rounded-top-4">
+                    <h4 class="mb-0">{{ dashboard_title }}</h4>
+                </div>
+                <div class="card-body p-4">
 
-  <!-- Header -->
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">{{ dashboard_title }}</h1>
-    <a href="{% url 'clients:client_list' %}" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition">
-      ← Back to Clients
-    </a>
-  </div>
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
 
-  <!-- Messages -->
-  {% if messages %}
-    <div class="space-y-2 mb-4">
-      {% for message in messages %}
-        <div class="px-4 py-2 rounded-lg {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
-          {{ message }}
+                    <form method="post" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6 form-floating">
+                                {{ form.first_name|add_class:"form-control" }}
+                                <label for="{{ form.first_name.id_for_label }}">First Name</label>
+                                {% if form.first_name.errors %}
+                                    <div class="text-danger small mt-1">{{ form.first_name.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 form-floating">
+                                {{ form.last_name|add_class:"form-control" }}
+                                <label for="{{ form.last_name.id_for_label }}">Last Name</label>
+                                {% if form.last_name.errors %}
+                                    <div class="text-danger small mt-1">{{ form.last_name.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6 form-floating">
+                                {{ form.email|add_class:"form-control" }}
+                                <label for="{{ form.email.id_for_label }}">Email</label>
+                                {% if form.email.errors %}
+                                    <div class="text-danger small mt-1">{{ form.email.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 form-floating">
+                                {{ form.phone|add_class:"form-control" }}
+                                <label for="{{ form.phone.id_for_label }}">Phone</label>
+                                {% if form.phone.errors %}
+                                    <div class="text-danger small mt-1">{{ form.phone.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="fingerprint_file" class="form-label">Fingerprint</label>
+                            <input type="file" name="fingerprint_file" class="form-control">
+                        </div>
+
+                        <div class="mb-3 form-floating">
+                            {{ form.photo|add_class:"form-control" }}
+                            <label for="{{ form.photo.id_for_label }}">Photo</label>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-4">
+                            <a href="{% url 'clients:client_list' %}" class="btn btn-outline-secondary me-2">Cancel</a>
+                            <button type="submit" class="btn btn-primary btn-lg px-4">Save Client</button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
         </div>
-      {% endfor %}
     </div>
-  {% endif %}
-
-  <!-- Add Client Form -->
-  <form method="POST" class="space-y-6">
-    {% csrf_token %}
-
-    <div>
-      <label for="first_name" class="block text-sm font-medium text-gray-700">First Name <span class="text-red-500">*</span></label>
-      <input type="text" name="first_name" id="first_name" placeholder="John" required
-             class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-    </div>
-
-    <div>
-      <label for="last_name" class="block text-sm font-medium text-gray-700">Last Name <span class="text-red-500">*</span></label>
-      <input type="text" name="last_name" id="last_name" placeholder="Doe" required
-             class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-    </div>
-
-    <div>
-      <label for="email" class="block text-sm font-medium text-gray-700">Email <span class="text-red-500">*</span></label>
-      <input type="email" name="email" id="email" placeholder="john@example.com" required
-             class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-    </div>
-
-    <div>
-      <label for="phone" class="block text-sm font-medium text-gray-700">Phone</label>
-      <input type="text" name="phone" id="phone" placeholder="+254 712 345 678"
-             class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-    </div>
-
-    <!-- Submit Button -->
-    <div class="flex justify-end">
-      <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">
-        ➕ Add Client
-      </button>
-    </div>
-
-  </form>
 </div>
+
+<style>
+    .bg-gradient-primary {
+        background: linear-gradient(90deg, #4b6cb7, #182848);
+    }
+    .card-header h4 {
+        font-weight: 600;
+    }
+    .form-floating > .form-control:focus ~ label {
+        color: #4b6cb7;
+        transform: scale(.85) translateY(-1rem) translateX(.15rem);
+    }
+</style>
 {% endblock %}

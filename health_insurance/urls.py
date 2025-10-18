@@ -4,15 +4,18 @@ from rest_framework import routers
 
 # Main views
 from accounts.views import dashboard
-from clients.views import ClientViewSet
-from policies.views import PolicyViewSet
-from claims.views import ClaimViewSet
-from hospitals.views import HospitalViewSet
 
 # =========================
 # 🌐 API Routers
 # =========================
 router = routers.DefaultRouter()
+
+# Import ViewSets **inside here** to avoid circular imports
+from clients.views import ClientViewSet
+from policies.views import PolicyViewSet
+from claims.views import ClaimViewSet
+from hospitals.views import HospitalViewSet
+
 router.register(r'clients', ClientViewSet)
 router.register(r'policies', PolicyViewSet)
 router.register(r'claims', ClaimViewSet)
@@ -31,18 +34,12 @@ urlpatterns = [
     # Dashboard (main entry)
     path('dashboard/', dashboard, name='main_dashboard'),
 
-    # Clients
+    # Apps
     path('clients/', include(('clients.urls', 'clients'), namespace='clients')),
-
-    # Policies
     path('policies/', include(('policies.urls', 'policies'), namespace='policies')),
-
-    # Claims
     path('claims/', include(('claims.urls', 'claims'), namespace='claims')),
-
-    # Hospitals
     path('hospitals/', include(('hospitals.urls', 'hospitals'), namespace='hospitals')),
 
-    # REST API endpoints
+    # REST API
     path('api/', include(router.urls)),
 ]

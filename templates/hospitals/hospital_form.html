@@ -1,127 +1,57 @@
 {% extends 'dashboard/base.html' %}
-{% block content %}
 
-<div class="max-w-3xl mx-auto bg-white shadow-lg rounded-xl p-8 space-y-6">
-  <h1 class="text-2xl font-bold text-gray-800 mb-6">{{ dashboard_title }}</h1>
+{% block content %}
+<div class="max-w-4xl mx-auto bg-white shadow-lg rounded-xl p-8 space-y-6">
+  <h1 class="text-2xl font-bold">{{ dashboard_title }}</h1>
 
   <form method="POST" enctype="multipart/form-data" class="space-y-5">
     {% csrf_token %}
 
-    <!-- Hospital Name -->
-    <div>
-      <label class="block text-sm font-semibold text-gray-600">Hospital Name *</label>
-      <input type="text" name="name" required
-             value="{{ hospital.name|default:'' }}"
-             class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+    <input type="text" name="name" placeholder="Hospital Name" required
+           value="{{ hospital.name|default_if_none:'' }}" class="w-full border rounded-lg px-3 py-2">
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <input type="text" name="owner_first_name" placeholder="Owner First Name" required
+             value="{{ hospital.owner_first_name|default_if_none:'' }}" class="w-full border rounded-lg px-3 py-2">
+      <input type="text" name="owner_last_name" placeholder="Owner Last Name" required
+             value="{{ hospital.owner_last_name|default_if_none:'' }}" class="w-full border rounded-lg px-3 py-2">
     </div>
 
-    <!-- Owner -->
-    <div class="flex space-x-4">
-      <div class="flex-1">
-        <label class="block text-sm font-semibold text-gray-600">Owner First Name *</label>
-        <input type="text" name="owner_first_name" required
-               value="{{ hospital.owner_first_name|default:'' }}"
-               class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-      </div>
-      <div class="flex-1">
-        <label class="block text-sm font-semibold text-gray-600">Owner Last Name *</label>
-        <input type="text" name="owner_last_name" required
-               value="{{ hospital.owner_last_name|default:'' }}"
-               class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-      </div>
-    </div>
+    <input type="email" name="email" placeholder="Email" required
+           value="{{ hospital.email|default_if_none:'' }}" class="w-full border rounded-lg px-3 py-2">
 
-    <!-- Email -->
-    <div>
-      <label class="block text-sm font-semibold text-gray-600">Email *</label>
-      <input type="email" name="email" required
-             value="{{ hospital.email|default:'' }}"
-             class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-    </div>
+    <input type="text" name="phone" placeholder="Phone"
+           value="{{ hospital.phone|default_if_none:'' }}" class="w-full border rounded-lg px-3 py-2">
 
-    <!-- Contact -->
-    <div class="flex space-x-4">
-      <div class="flex-1">
-        <label class="block text-sm font-semibold text-gray-600">Mobile</label>
-        <input type="text" name="mobile"
-               value="{{ hospital.mobile|default:'' }}"
-               class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-      </div>
-      <div class="flex-1">
-        <label class="block text-sm font-semibold text-gray-600">Phone</label>
-        <input type="text" name="phone"
-               value="{{ hospital.phone|default:'' }}"
-               class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-      </div>
-    </div>
+    <input type="text" name="mobile" placeholder="Mobile"
+           value="{{ hospital.mobile|default_if_none:'' }}" class="w-full border rounded-lg px-3 py-2">
 
-    <!-- Address -->
-    <div>
-      <label class="block text-sm font-semibold text-gray-600">Address</label>
-      <input type="text" name="address"
-             value="{{ hospital.address|default:'' }}"
-             class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-    </div>
+    <input type="text" name="address" placeholder="Address"
+           value="{{ hospital.address|default_if_none:'' }}" class="w-full border rounded-lg px-3 py-2">
 
-    <!-- City & Country -->
-    <div class="flex space-x-4">
-      <div class="flex-1">
-        <label class="block text-sm font-semibold text-gray-600">City</label>
-        <input type="text" name="city"
-               value="{{ hospital.city|default:'' }}"
-               class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-      </div>
-      <div class="flex-1">
-        <label class="block text-sm font-semibold text-gray-600">Country</label>
-        <input type="text" name="country"
-               value="{{ hospital.country|default:'' }}"
-               class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-      </div>
-    </div>
+    <input type="text" name="city" placeholder="City"
+           value="{{ hospital.city|default_if_none:'' }}" class="w-full border rounded-lg px-3 py-2">
 
-    <!-- Language & Currency -->
-    <div class="flex space-x-4">
-      <div class="flex-1">
-        <label class="block text-sm font-semibold text-gray-600">Language</label>
-        <input type="text" name="language"
-               value="{{ hospital.language|default:'English' }}"
-               class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-      </div>
-      <div class="flex-1">
-        <label class="block text-sm font-semibold text-gray-600">Currency</label>
-        <input type="text" name="currency"
-               value="{{ hospital.currency|default:'USD' }}"
-               class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-      </div>
-    </div>
+    <input type="text" name="country" placeholder="Country"
+           value="{{ hospital.country|default_if_none:'' }}" class="w-full border rounded-lg px-3 py-2">
 
-    <!-- Verified -->
+    <input type="text" name="language" placeholder="Language"
+           value="{{ hospital.language|default_if_none:'English' }}" class="w-full border rounded-lg px-3 py-2">
+
+    <input type="text" name="currency" placeholder="Currency"
+           value="{{ hospital.currency|default_if_none:'USD' }}" class="w-full border rounded-lg px-3 py-2">
+
+    <input type="file" name="image" accept="image/*" class="w-full border rounded-lg px-3 py-2">
+
     <div class="flex items-center space-x-2">
-      <input type="checkbox" name="verified" id="verified"
-             {% if hospital.verified %}checked{% endif %}
-             class="w-4 h-4 text-blue-600">
-      <label for="verified" class="text-sm text-gray-700">Verified</label>
+      <input type="checkbox" name="verified" id="verified" {% if hospital.verified %}checked{% endif %}>
+      <label for="verified">Verified</label>
     </div>
 
-    <!-- Image -->
-    <div>
-      <label class="block text-sm font-semibold text-gray-600">Hospital Image</label>
-      <input type="file" name="image" class="w-full text-sm">
-      {% if hospital.image %}
-        <img src="{{ hospital.image.url }}" alt="Hospital Image" class="mt-2 w-32 h-32 object-cover rounded-lg">
-      {% endif %}
-    </div>
-
-    <!-- Buttons -->
     <div class="flex justify-end space-x-3">
-      <a href="{% url 'hospitals:hospital_list' %}"
-         class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Cancel</a>
-      <button type="submit"
-              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-        {% if hospital %}Update Hospital{% else %}Add Hospital{% endif %}
-      </button>
+      <a href="{% url 'hospitals:hospital_list' %}" class="px-4 py-2 bg-gray-200 rounded-lg">Cancel</a>
+      <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Save</button>
     </div>
   </form>
 </div>
-
 {% endblock %}

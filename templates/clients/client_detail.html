@@ -1,0 +1,39 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Client Details | Health Insurance{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto mt-8 bg-white rounded-xl shadow-lg p-6">
+
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold">{{ dashboard_title }}</h1>
+    <a href="{% url 'clients:client_list' %}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+      ⬅ Back to Clients
+    </a>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div>
+      {% if client.photo %}
+      <img src="{{ client.photo.url }}" class="w-full h-64 object-cover rounded-lg" alt="{{ client.first_name }}">
+      {% else %}
+      <div class="w-full h-64 bg-gray-200 flex items-center justify-center rounded-lg text-gray-500">No Photo</div>
+      {% endif %}
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold mb-2">{{ client.first_name }} {{ client.last_name }}</h2>
+      <p class="mb-2"><strong>Email:</strong> {{ client.email }}</p>
+      <p class="mb-2"><strong>Phone:</strong> {{ client.phone }}</p>
+      <p class="mb-2"><strong>Agent:</strong> {{ client.agent }}</p>
+      <p class="mb-2"><strong>Registered At:</strong> {{ client.created_at|date:"M d, Y H:i" }}</p>
+      <p class="mb-2"><strong>Fingerprint:</strong> {% if client.fingerprint_data %} Available {% else %} Not Provided {% endif %}</p>
+
+      <div class="mt-4 flex gap-2">
+        <a href="{% url 'clients:edit_client' client.id %}" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Edit</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

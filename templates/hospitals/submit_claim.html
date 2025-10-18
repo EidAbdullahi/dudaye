@@ -1,58 +1,54 @@
 {% extends 'dashboard/base.html' %}
-{% load static %}
 
-{% block title %}Submit Claim | Health Insurance{% endblock %}
+{% block title %}{{ dashboard_title }} | Health Insurance{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto p-6 bg-white rounded-xl shadow-lg mt-8">
+<div class="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-lg mt-8">
 
-  <h1 class="text-2xl font-bold mb-6">{{ dashboard_title }}</h1>
+  <h1 class="text-2xl font-bold mb-4">{{ dashboard_title }}</h1>
 
   {% if messages %}
-    <div class="space-y-2 mb-4">
-      {% for message in messages %}
-        <div class="px-4 py-2 rounded-lg {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
-          {{ message }}
-        </div>
-      {% endfor %}
-    </div>
+    {% for message in messages %}
+      <div class="mb-4 px-4 py-2 rounded {{ message.tags|default:'bg-gray-100 text-gray-800' }}">
+        {{ message }}
+      </div>
+    {% endfor %}
   {% endif %}
 
   <form method="POST" class="space-y-4">
     {% csrf_token %}
-    <div>
-      <label class="block mb-1 font-medium">Claim Number</label>
-      <input type="text" name="claim_number" class="w-full border rounded-lg px-3 py-2" required>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block font-semibold mb-1">Client</label>
+        <select name="client" class="w-full border px-3 py-2 rounded">
+          <option value="">Select Client</option>
+          {% for client in clients %}
+            <option value="{{ client.id }}">{{ client.first_name }} {{ client.last_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="block font-semibold mb-1">Policy</label>
+        <select name="policy" class="w-full border px-3 py-2 rounded">
+          <option value="">Select Policy</option>
+          {% for policy in policies %}
+            <option value="{{ policy.id }}">{{ policy.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="block font-semibold mb-1">Amount</label>
+        <input type="number" name="amount" class="w-full border px-3 py-2 rounded">
+      </div>
     </div>
 
-    <div>
-      <label class="block mb-1 font-medium">Client</label>
-      <select name="client" class="w-full border rounded-lg px-3 py-2" required>
-        <option value="">Select Client</option>
-        {% for client in clients %}
-          <option value="{{ client.id }}">{{ client.first_name }} {{ client.last_name }}</option>
-        {% endfor %}
-      </select>
+    <div class="flex justify-end space-x-2 mt-4">
+      <a href="{% url 'hospitals:dashboard' %}" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">Cancel</a>
+      <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Submit Claim</button>
     </div>
-
-    <div>
-      <label class="block mb-1 font-medium">Policy</label>
-      <select name="policy" class="w-full border rounded-lg px-3 py-2" required>
-        <option value="">Select Policy</option>
-        {% for policy in policies %}
-          <option value="{{ policy.id }}">{{ policy.policy_number }} - {{ policy.client }}</option>
-        {% endfor %}
-      </select>
-    </div>
-
-    <div>
-      <label class="block mb-1 font-medium">Amount</label>
-      <input type="number" name="amount" class="w-full border rounded-lg px-3 py-2" required>
-    </div>
-
-    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-      Submit Claim
-    </button>
   </form>
 </div>
 {% endblock %}

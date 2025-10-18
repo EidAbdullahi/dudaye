@@ -1,43 +1,34 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from rest_framework import viewsets, permissions
 
 from .models import Client
+from .forms import ClientForm
 from .serializers import ClientSerializer
 from accounts.utils import roles_required
 
-# -----------------------------
-# API ViewSet
-# -----------------------------
-class ClientViewSet(viewsets.ModelViewSet):
-    queryset = Client.objects.all()
-    serializer_class = ClientSerializer
-    permission_classes = [permissions.IsAuthenticated]
 
-# -----------------------------
-# Web Views
-# -----------------------------
+# ==========================
+# 🌍 Web Views
+# ==========================
 @login_required
-@roles_required("admin")
+@roles_required("admin", "agent")
 def client_list(request):
     """
-    Admin / Superuser: See all clients
-    Agent: See only own clients
+    Display a list of clients:
+    - Admin: All clients
+    - Agent: Only their clients
     """
     user = request.user
-    role = getattr(user, "role", "guest")
-
-    if role == "agent":
+    if getattr(user, "role", None) == "agent":
         clients = Client.objects.filter(agent=user)
     else:
         clients = Client.objects.all()
 
     context = {
         "clients": clients,
-        "role": role,
-        "user": user,
-        "dashboard_title": "Clients Directory",
+        "dashboard_title": "Clients List",
     }
     return render(request, "clients/client_list.html", context)
 
@@ -46,35 +37,79 @@ def client_list(request):
 @roles_required("admin", "agent")
 def add_client(request):
     """
-    Admin / Superuser: Can add any client
-    Agent: Can add clients assigned to them
+    Add/register a new client with optional fingerprint and photo.
     """
-    user = request.user
-    role = getattr(user, "role", "guest")
-
     if request.method == "POST":
-        first_name = request.POST.get("first_name")
-        last_name = request.POST.get("last_name")
-        email = request.POST.get("email")
-        phone = request.POST.get("phone")
-
-        if first_name and last_name and email:
-            Client.objects.create(
-                first_name=first_name,
-                last_name=last_name,
-                email=email,
-                phone=phone,
-                created_by=user,
-                agent=user if role == "agent" else None,
-            )
-            messages.success(request, f"Client {first_name} {last_name} added successfully.")
+        form = ClientForm(request.POST, request.FILES)
+        if form.is_valid():
+            client = form.save(commit=False)
+            fingerprint = request.FILES.get("fingerprint_file")
+            if fingerprint:
+                client.fingerprint_data = fingerprint.read()
+            client.registered_by = request.user
+            client.save()
+            messages.success(request, f"Client '{client}' registered successfully!")
             return redirect("clients:client_list")
         else:
-            messages.error(request, "Please fill all required fields.")
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = ClientForm()
 
     context = {
-        "dashboard_title": "Add New Client",
-        "user": user,
-        "role": role,
+        "form": form,
+        "dashboard_title": "Register New Client",
     }
-    return render(request, "clients/add_client.html", context)
+    return render(request, "clients/client_form.html", context)
+
+
+@login_required
+@roles_required("admin", "agent")
+def edit_client(request, pk):
+    client = get_object_or_404(Client, pk=pk)
+
+    if request.method == "POST":
+        form = ClientForm(request.POST, request.FILES, instance=client)
+        if form.is_valid():
+            client = form.save(commit=False)
+            fingerprint = request.FILES.get("fingerprint_file")
+            if fingerprint:
+                client.fingerprint_data = fingerprint.read()
+            client.save()
+            messages.success(request, f"Client '{client.first_name} {client.last_name}' updated successfully!")
+            return redirect("clients:client_list")
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        # Important: Pass the instance to prefill the form
+        form = ClientForm(instance=client)
+
+    return render(request, "clients/client_form.html", {
+        "form": form,
+        "dashboard_title": f"Edit Client: {client.first_name} {client.last_name}"
+    })
+
+
+@login_required
+@roles_required("admin", "agent")
+def client_detail(request, pk):
+    """
+    View details of a single client.
+    """
+    client = get_object_or_404(Client, pk=pk)
+    context = {
+        "client": client,
+        "dashboard_title": f"Client: {client.first_name} {client.last_name}",
+    }
+    return render(request, "clients/client_detail.html", context)
+
+
+# ==========================
+# 🌐 API Views (DRF)
+# ==========================
+class ClientViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint to manage clients.
+    """
+    queryset = Client.objects.all()
+    serializer_class = ClientSerializer
+    permission_classes = [permissions.IsAuthenticated]

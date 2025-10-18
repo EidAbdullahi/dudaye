@@ -1,0 +1,92 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}{{ dashboard_title }} | Health Insurance{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-lg mt-8">
+
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">{{ dashboard_title }}</h1>
+    <a href="{% url 'clients:client_list' %}" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
+      ⬅ Back to Clients
+    </a>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="mb-4 px-4 py-2 rounded {{ message.tags|default:'bg-gray-100 text-gray-800' }}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <form method="POST" enctype="multipart/form-data" class="space-y-4">
+    {% csrf_token %}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1">First Name</label>
+        {{ form.first_name }}
+        {% if form.first_name.errors %}
+          <div class="text-red-600 text-sm">{{ form.first_name.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1">Last Name</label>
+        {{ form.last_name }}
+        {% if form.last_name.errors %}
+          <div class="text-red-600 text-sm">{{ form.last_name.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1">Email</label>
+        {{ form.email }}
+      </div>
+
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1">Phone</label>
+        {{ form.phone }}
+      </div>
+
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1">Date of Birth</label>
+        {{ form.dob }}
+      </div>
+
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1">Gender</label>
+        {{ form.gender }}
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="block text-gray-700 font-semibold mb-1">Address</label>
+        {{ form.address }}
+      </div>
+
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1">Assign Agent</label>
+        {{ form.agent }}
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="block text-gray-700 font-semibold mb-1">Fingerprint</label>
+        <input type="file" name="fingerprint_file" class="w-full border px-3 py-2 rounded">
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="block text-gray-700 font-semibold mb-1">Photo</label>
+        {{ form.photo }}
+      </div>
+    </div>
+
+    <div class="flex justify-end space-x-2">
+      <a href="{% url 'clients:client_list' %}" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">Cancel</a>
+      <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Save Client</button>
+    </div>
+
+  </form>
+</div>
+{% endblock %}

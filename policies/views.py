@@ -2,83 +2,13 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from rest_framework import viewsets, permissions
+from django.utils import timezone
+
 from .models import Policy
 from .serializers import PolicySerializer
 from clients.models import Client
 from accounts.utils import roles_required
 
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from accounts.utils import roles_required
-from .models import Policy
-from clients.models import Client
-
-@login_required
-@roles_required("admin", "finance_officer")
-def policy_form(request, pk=None):
-    """
-    Add or Edit Policy
-    - pk=None → Add new policy
-    - pk provided → Edit existing policy
-    """
-    policy = None
-    if pk:
-        policy = get_object_or_404(Policy, pk=pk)
-
-    clients = Client.objects.all()
-    policy_types = Policy.POLICY_TYPE
-
-    if request.method == "POST":
-        data = request.POST
-        client_id = data.get("client")
-        client = get_object_or_404(Client, pk=client_id)
-
-        policy_number = data.get("policy_number")
-        policy_type = data.get("type")
-        start_date = data.get("start_date")
-        end_date = data.get("end_date")
-        premium = data.get("premium")
-        active = data.get("active") == "on"
-
-        if all([client, policy_number, policy_type, start_date, end_date, premium]):
-            if policy:
-                # Edit existing policy
-                policy.client = client
-                policy.policy_number = policy_number
-                policy.type = policy_type
-                policy.start_date = start_date
-                policy.end_date = end_date
-                policy.premium = premium
-                policy.active = active
-                policy.save()
-                messages.success(request, f"Policy '{policy.policy_number}' updated successfully.")
-            else:
-                # Add new policy
-                Policy.objects.create(
-                    client=client,
-                    policy_number=policy_number,
-                    type=policy_type,
-                    start_date=start_date,
-                    end_date=end_date,
-                    premium=premium,
-                    active=active,
-                    created_by=request.user,
-                )
-                messages.success(request, f"Policy '{policy_number}' added successfully.")
-
-            return redirect("policies:policy_list")
-        else:
-            messages.error(request, "Please fill all required fields.")
-
-    context = {
-        "policy": policy,
-        "clients": clients,
-        "policy_types": policy_types,
-        "dashboard_title": "Edit Policy" if policy else "Add New Policy",
-        "role": request.user.role,
-    }
-    return render(request, "policies/policy_form.html", context)
 
 # ==============================
 # 🌐 API ViewSet (DRF)
@@ -91,6 +21,7 @@ class PolicyViewSet(viewsets.ModelViewSet):
     queryset = Policy.objects.all()
     serializer_class = PolicySerializer
     permission_classes = [permissions.IsAuthenticated]
+
 
 # ==============================
 # 🌍 Web Views
@@ -128,6 +59,9 @@ def policy_form(request, pk=None):
     if pk:
         policy = get_object_or_404(Policy, pk=pk)
 
+    clients = Client.objects.all()
+    policy_types = Policy.POLICY_TYPE
+
     if request.method == "POST":
         data = request.POST
         client_id = data.get("client")
@@ -136,7 +70,7 @@ def policy_form(request, pk=None):
         required_fields = ["policy_number", "type", "start_date", "end_date", "premium"]
         if all(data.get(f) for f in required_fields):
             if policy:
-                # Edit
+                # Edit existing policy
                 policy.client = client
                 policy.policy_number = data.get("policy_number")
                 policy.type = data.get("type")
@@ -147,7 +81,7 @@ def policy_form(request, pk=None):
                 policy.save()
                 messages.success(request, f"Policy '{policy.policy_number}' updated successfully.")
             else:
-                # Add
+                # Add new policy
                 Policy.objects.create(
                     client=client,
                     policy_number=data.get("policy_number"),
@@ -164,10 +98,10 @@ def policy_form(request, pk=None):
         else:
             messages.error(request, "Please fill all required fields.")
 
-    clients = Client.objects.all()
     context = {
         "policy": policy,
         "clients": clients,
+        "policy_types": policy_types,
         "dashboard_title": "Edit Policy" if policy else "Add New Policy",
         "role": request.user.role,
     }
@@ -187,3 +121,28 @@ def policy_detail(request, pk):
         "role": getattr(request.user, "role", "guest"),
     }
     return render(request, "policies/policy_detail.html", context)
+
+
+# ==============================
+# Helper: Auto-create health policy
+# ==============================
+def create_health_policy(client, created_by):
+    """
+    Automatically create a Health Policy for a given client.
+    """
+    policy_number = f"H-{timezone.now().strftime('%Y%m%d%H%M%S')}"
+    start_date = timezone.now().date()
+    end_date = start_date.replace(year=start_date.year + 1)
+    premium_amount = 500.00  # Default premium
+
+    policy = Policy.objects.create(
+        client=client,
+        policy_number=policy_number,
+        type="health",
+        start_date=start_date,
+        end_date=end_date,
+        premium=premium_amount,
+        active=True,
+        created_by=created_by,
+    )
+    return policy
