@@ -10,6 +10,8 @@ class Claim(models.Model):
         ('pending', 'Pending'),
         ('approved', 'Approved'),
         ('rejected', 'Rejected'),
+        ('reimbursed', 'Reimbursed'), 
+
     ]
 
     claim_number = models.CharField(max_length=50, unique=True)

@@ -12,6 +12,7 @@ from clients.models import Client
 from policies.models import Policy
 from claims.models import Claim
 from accounts.utils import roles_required
+from .forms import HospitalForm
 
 User = get_user_model()
 
@@ -27,11 +28,12 @@ class HospitalViewSet(viewsets.ModelViewSet):
 # ==============================
 # 🌍 Web Views
 # ==============================
+
 @login_required
 def hospital_list(request):
     """
     Display hospitals depending on user role:
-    - Admin / Superuser / Finance Officer: All hospitals (newest first)
+    - Admin / Superuser / Finance Officer: All hospitals
     - Others: Verified only
     """
     user = request.user
@@ -71,7 +73,7 @@ def hospital_detail(request, pk):
 @roles_required("admin", "finance_officer")
 def hospital_form(request, pk=None):
     """
-    Add or Edit Hospital
+    Add or Edit a hospital.
     Automatically creates a user for new hospitals.
     """
     hospital = None
@@ -79,71 +81,47 @@ def hospital_form(request, pk=None):
         hospital = get_object_or_404(Hospital, pk=pk)
 
     if request.method == "POST":
-        data = request.POST
-        image = request.FILES.get("image")
+        form = HospitalForm(request.POST, request.FILES, instance=hospital)
+        if form.is_valid():
+            hospital_obj = form.save(commit=False)
 
-        required_fields = ["name", "owner_first_name", "owner_last_name", "email"]
-        if not hospital:
-            # For new hospital, username and password are required
-            required_fields += ["username", "password"]
+            if not hospital:
+                # Create a user account for new hospital
+                username = request.POST.get("username")
+                password = request.POST.get("password")
+                if not username or not password:
+                    messages.error(request, "Username and password are required for new hospitals.")
+                    return render(request, "hospitals/hospital_form.html", {"form": form, "hospital": hospital})
 
-        if all(data.get(f) for f in required_fields):
-            if hospital:
-                # Edit existing hospital
-                for field in ["name", "owner_first_name", "owner_last_name", "email",
-                              "mobile", "phone", "address", "city", "country",
-                              "language", "currency"]:
-                    setattr(hospital, field, data.get(field, getattr(hospital, field)))
-                hospital.verified = data.get("verified") == "on"
-                if image:
-                    hospital.image = image
-                hospital.save()
-                messages.success(request, f"Hospital '{hospital.name}' updated successfully.")
-            else:
-                # Create user account for hospital
-                username = data.get("username")
-                password = data.get("password")
                 if User.objects.filter(username=username).exists():
                     messages.error(request, f"Username '{username}' is already taken.")
-                    return redirect("hospitals:hospital_form")
+                    return render(request, "hospitals/hospital_form.html", {"form": form, "hospital": hospital})
 
                 user = User.objects.create(
                     username=username,
-                    email=data.get("email"),
+                    email=form.cleaned_data.get("email"),
                     password=make_password(password),
                     role="hospital",
-                    is_active=True,
+                    is_active=True
                 )
+                hospital_obj.user = user
+                messages.success(request, f"Hospital '{hospital_obj.name}' added successfully with username '{username}'.")
+            else:
+                messages.success(request, f"Hospital '{hospital_obj.name}' updated successfully.")
 
-                # Create hospital profile
-                Hospital.objects.create(
-                    user=user,
-                    name=data.get("name"),
-                    owner_first_name=data.get("owner_first_name"),
-                    owner_last_name=data.get("owner_last_name"),
-                    email=data.get("email"),
-                    mobile=data.get("mobile"),
-                    phone=data.get("phone"),
-                    address=data.get("address"),
-                    city=data.get("city"),
-                    country=data.get("country"),
-                    language=data.get("language") or "English",
-                    currency=data.get("currency") or "USD",
-                    verified=data.get("verified") == "on",
-                    image=image,
-                )
-
-                messages.success(request, f"Hospital '{data.get('name')}' added successfully with username '{username}'.")
-
+            hospital_obj.save()
             return redirect("hospitals:hospital_list")
         else:
-            messages.error(request, "Please fill all required fields.")
+            messages.error(request, "Please fix the errors below.")
+    else:
+        form = HospitalForm(instance=hospital)
 
-    return render(request, "hospitals/hospital_form.html", {
+    context = {
+        "form": form,
         "hospital": hospital,
         "dashboard_title": "Edit Hospital" if hospital else "Add New Hospital",
-        "role": request.user.role,
-    })
+    }
+    return render(request, "hospitals/hospital_form.html", context)
 
 
 @login_required

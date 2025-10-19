@@ -3,7 +3,20 @@
 <div class="max-w-3xl mx-auto bg-white shadow-lg rounded-xl p-8 space-y-6">
   <h1 class="text-2xl font-bold text-gray-800 mb-4">{{ dashboard_title }}</h1>
 
-  <form method="POST" enctype="multipart/form-data" class="space-y-5">
+  {% if messages %}
+    <div class="mb-4">
+      {% for message in messages %}
+        <div 
+          class="px-4 py-2 rounded mb-2 
+          {% if message.tags == 'error' %}bg-red-100 text-red-700{% endif %}
+          {% if message.tags == 'success' %}bg-green-100 text-green-700{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <form method="POST" class="space-y-5">
     {% csrf_token %}
 
     <!-- Client Selection -->
@@ -21,12 +34,14 @@
       </select>
     </div>
 
-    <!-- Policy Number -->
+    <!-- Policy Number (auto-generate if empty) -->
     <div>
       <label class="block text-sm font-semibold text-gray-600">Policy Number</label>
-      <input type="text" name="policy_number" required
-             value="{{ policy.policy_number|default:'' }}"
-             class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+      <input type="text" name="policy_number" 
+             value="{{ policy.policy_number|default:auto_policy_number }}"
+             class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+             readonly>
+      <p class="text-xs text-gray-500 mt-1">Policy number is automatically generated and unique.</p>
     </div>
 
     <!-- Policy Type -->

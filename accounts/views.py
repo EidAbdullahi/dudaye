@@ -25,13 +25,23 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
 
-# =========================
-# 🔐 LOGIN VIEW
-# =========================
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login
+from django.contrib import messages
+
 def login_view(request):
-    """Handles user authentication with styled messages"""
+    """Handles user authentication and redirects to role-specific dashboards"""
     if request.user.is_authenticated:
-        return redirect('accounts:dashboard')
+        # Redirect already logged-in users to their dashboard
+        role = getattr(request.user, "role", None)
+        if role == "admin" or request.user.is_superuser:
+            return redirect('hospitals:hospital_list')  # Admin/Finance dashboard
+        elif role == "finance_officer":
+            return redirect('hospitals:hospital_list')
+        elif role == "hospital":
+            return redirect('hospitals:dashboard')       # Hospital user dashboard
+        else:
+            return redirect('accounts:dashboard')       # Default
 
     if request.method == "POST":
         username = request.POST.get("username")
@@ -45,11 +55,22 @@ def login_view(request):
             else:
                 login(request, user)
                 messages.success(request, f"Welcome back, {user.username}!")
-                return redirect('accounts:dashboard')
+
+                # Redirect based on role
+                role = getattr(user, "role", None)
+                if role == "admin" or user.is_superuser:
+                    return redirect('hospitals:hospital_list')
+                elif role == "finance_officer":
+                    return redirect('hospitals:hospital_list')
+                elif role == "hospital":
+                    return redirect('hospitals:dashboard')
+                else:
+                    return redirect('accounts:dashboard')
         else:
             messages.error(request, "Invalid username or password.")
 
     return render(request, "registration/login.html")
+
 
 
 # =========================
