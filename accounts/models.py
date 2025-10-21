@@ -66,3 +66,15 @@ class User(AbstractUser):
         Returns True only if the user is active and not suspended.
         """
         return self.is_active and not self.is_suspended
+
+    # =========================
+    # 🧠 Smart Default Logic
+    # =========================
+    def save(self, *args, **kwargs):
+        """
+        Automatically assign the correct role for superusers.
+        Ensures no superuser is incorrectly labeled as 'Policyholder'.
+        """
+        if self.is_superuser and self.role != "admin":
+            self.role = "admin"
+        super().save(*args, **kwargs)
