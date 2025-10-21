@@ -4,8 +4,12 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
+from django.db.models import Sum, F, FloatField
+from django.db.models.functions import Coalesce
 from rest_framework import viewsets, permissions
+import json
 
+# Import models
 from .models import Hospital
 from .serializers import HospitalSerializer
 from clients.models import Client
@@ -16,25 +20,25 @@ from .forms import HospitalForm
 
 User = get_user_model()
 
-# ==============================
-# 🌐 DRF API ViewSet
-# ==============================
+# =====================================
+# 🌐 API ViewSet
+# =====================================
 class HospitalViewSet(viewsets.ModelViewSet):
     queryset = Hospital.objects.all().order_by('-created_at')
     serializer_class = HospitalSerializer
     permission_classes = [permissions.IsAuthenticated]
 
 
-# ==============================
-# 🌍 Web Views
-# ==============================
+# =====================================
+# 🏥 HOSPITAL MANAGEMENT VIEWS
+# =====================================
 
 @login_required
 def hospital_list(request):
     """
-    Display hospitals depending on user role:
-    - Admin / Superuser / Finance Officer: All hospitals
-    - Others: Verified only
+    Display hospitals depending on user role.
+    - Admin / Finance Officer / Superuser: all hospitals
+    - Others: verified only
     """
     user = request.user
     role = getattr(user, "role", "guest")
@@ -73,8 +77,8 @@ def hospital_detail(request, pk):
 @roles_required("admin", "finance_officer")
 def hospital_form(request, pk=None):
     """
-    Add or Edit a hospital.
-    Automatically creates a user for new hospitals.
+    Add or edit a hospital.
+    Automatically creates a linked user for new hospitals.
     """
     hospital = None
     if pk:
@@ -86,16 +90,16 @@ def hospital_form(request, pk=None):
             hospital_obj = form.save(commit=False)
 
             if not hospital:
-                # Create a user account for new hospital
+                # Create user for hospital
                 username = request.POST.get("username")
                 password = request.POST.get("password")
                 if not username or not password:
-                    messages.error(request, "Username and password are required for new hospitals.")
-                    return render(request, "hospitals/hospital_form.html", {"form": form, "hospital": hospital})
+                    messages.error(request, "Username and password are required.")
+                    return render(request, "hospitals/hospital_form.html", {"form": form})
 
                 if User.objects.filter(username=username).exists():
                     messages.error(request, f"Username '{username}' is already taken.")
-                    return render(request, "hospitals/hospital_form.html", {"form": form, "hospital": hospital})
+                    return render(request, "hospitals/hospital_form.html", {"form": form})
 
                 user = User.objects.create(
                     username=username,
@@ -105,7 +109,7 @@ def hospital_form(request, pk=None):
                     is_active=True
                 )
                 hospital_obj.user = user
-                messages.success(request, f"Hospital '{hospital_obj.name}' added successfully with username '{username}'.")
+                messages.success(request, f"Hospital '{hospital_obj.name}' created with user '{username}'.")
             else:
                 messages.success(request, f"Hospital '{hospital_obj.name}' updated successfully.")
 
@@ -124,72 +128,71 @@ def hospital_form(request, pk=None):
     return render(request, "hospitals/hospital_form.html", context)
 
 
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.shortcuts import render, redirect
-from claims.models import Claim
-
-from django.db.models import Sum
-
+# =====================================
+# 🏥 HOSPITAL DASHBOARD
+# =====================================
 @login_required
 def hospital_dashboard(request):
     """
-    Modern Hospital Dashboard:
-    - Displays claim stats
-    - Lists recent claims
-    - Revenue collected
+    Hospital dashboard with stats, revenue, and pending claims.
     """
     user = request.user
-
-    # ✅ Verify hospital profile
     hospital = getattr(user, "hospital_profile", None)
+
     if not hospital:
         messages.error(request, "Your hospital profile is missing. Contact admin.")
         return redirect("accounts:dashboard")
 
-    # ✅ Query all claims linked to this hospital
+    # Claims for this hospital
     claims = Claim.objects.filter(hospital=hospital).order_by("-created_at")
 
-    # ✅ Calculate statistics
+    # Stats
     total_claims = claims.count()
     pending_claims = claims.filter(status="pending").count()
     approved_claims = claims.filter(status="approved").count()
     rejected_claims = claims.filter(status="rejected").count()
 
-    # ✅ Calculate revenue collected (sum of approved claim amounts)
-    revenue_collected = claims.filter(status="approved").aggregate(
-        total=Sum('amount')
-    )['total'] or 0
+    # Revenue collected
+    revenue_collected = claims.filter(status__in=["approved", "reimbursed"]).aggregate(
+        total=Coalesce(Sum(F("amount"), output_field=FloatField()), 0.0)
+    )["total"]
 
-    # ✅ Prepare context for UI
+    # Pending claim amount
+    pending_amount = claims.filter(status="pending").aggregate(
+        total=Coalesce(Sum(F("amount"), output_field=FloatField()), 0.0)
+    )["total"]
+
     context = {
         "dashboard_title": f"{hospital.name} Dashboard",
         "user": user,
-        "role": getattr(user, "role", "hospital"),
         "hospital": hospital,
         "claims": claims,
         "total_claims": total_claims,
         "pending_claims": pending_claims,
         "approved_claims": approved_claims,
         "rejected_claims": rejected_claims,
-        "revenue_collected": revenue_collected,  # <--- Added here
-        "recent_claims": claims[:5],  # latest 5
+        "revenue_collected": revenue_collected,
+        "pending_amount": pending_amount,
+        "recent_claims": claims[:5],
     }
 
     return render(request, "hospitals/dashboard.html", context)
 
 
-
+# =====================================
+# 🧾 SUBMIT CLAIM (Hospital Users)
+# =====================================
 @login_required
 @roles_required("hospital")
 def submit_claim(request):
     """
-    Allows hospital users to submit claims for assigned clients.
+    Allows hospital users to submit claims.
     """
     user = request.user
     hospital = getattr(user, "hospital_profile", None)
+
     if not hospital:
-        messages.error(request, "Your hospital profile is missing. Contact admin.")
+        messages.error(request, "Your hospital profile is missing.")
         return redirect("hospitals:hospital_list")
 
     if request.method == "POST":
@@ -201,7 +204,6 @@ def submit_claim(request):
             try:
                 client = Client.objects.get(id=client_id)
                 policy = Policy.objects.get(id=policy_id, active=True)
-
                 claim_number = f"CLM-{timezone.now().strftime('%Y%m%d%H%M%S')}"
 
                 Claim.objects.create(
@@ -214,25 +216,97 @@ def submit_claim(request):
                     created_by=user,
                 )
                 messages.success(request, f"Claim {claim_number} submitted successfully.")
-                return redirect("hospitals:dashboard")
+                return redirect("claims:hospital_claim_dashboard")
 
             except Client.DoesNotExist:
-                messages.error(request, "Selected client does not exist.")
+                messages.error(request, "Invalid client.")
             except Policy.DoesNotExist:
-                messages.error(request, "Selected policy does not exist.")
+                messages.error(request, "Invalid policy.")
         else:
             messages.error(request, "All fields are required.")
 
-    # Filter only clients assigned to this hospital
-    clients = Client.objects.filter(agent__assigned_clients__hospital=hospital).distinct()
+    clients = Client.objects.all()
     policies = Policy.objects.filter(active=True)
 
     context = {
         "dashboard_title": "Submit New Claim",
         "user": user,
-        "role": user.role,
         "hospital": hospital,
         "clients": clients,
         "policies": policies,
     }
     return render(request, "hospitals/submit_claim.html", context)
+
+
+# =====================================
+# 🧭 ADMIN DASHBOARD (Modern)
+# =====================================
+@login_required
+def admin_dashboard(request):
+    """
+    Modern analytics dashboard for Admins / Finance Officers.
+    """
+    user = request.user
+    role = getattr(user, "role", "guest")
+
+    if not (user.is_superuser or role in ["admin", "finance_officer"]):
+        return redirect("accounts:dashboard")
+
+    # ===== Statistics =====
+    total_clients = Client.objects.count()
+    total_policies = Policy.objects.count()
+    total_claims = Claim.objects.count()
+    total_hospitals = Hospital.objects.count()
+    total_revenue = Policy.objects.aggregate(
+        total=Coalesce(Sum(F("premium"), output_field=FloatField()), 0.0)
+    )["total"]
+
+    # ===== Dashboard Cards =====
+    cards = [
+        {"label": "Clients", "value": total_clients, "color": "blue"},
+        {"label": "Policies", "value": total_policies, "color": "green"},
+        {"label": "Claims", "value": total_claims, "color": "yellow"},
+        {"label": "Hospitals", "value": total_hospitals, "color": "red"},
+        {"label": "Revenue", "value": f"${total_revenue:,.2f}", "color": "purple"},
+    ]
+
+    # ===== Shortcuts =====
+    shortcuts = [
+        {"name": "Add Client", "url": "/clients/add/", "color": "blue"},
+        {"name": "Add Policy", "url": "/policies/add/", "color": "green"},
+        {"name": "Manage Claims", "url": "/claims/", "color": "yellow"},
+        {"name": "Manage Hospitals", "url": "/hospitals/", "color": "red"},
+    ]
+
+    # ===== Charts =====
+    policies_labels = list(Policy.objects.values_list("type", flat=True).distinct())
+    policies_data = [Policy.objects.filter(type=t).count() for t in policies_labels]
+
+    claims_labels = ["Pending", "Approved", "Rejected"]
+    claims_data = [
+        Claim.objects.filter(status="pending").count(),
+        Claim.objects.filter(status="approved").count(),
+        Claim.objects.filter(status="rejected").count(),
+    ]
+
+    hospitals_labels = ["Verified", "Unverified"]
+    hospitals_data = [
+        Hospital.objects.filter(verified=True).count(),
+        Hospital.objects.filter(verified=False).count(),
+    ]
+
+    context = {
+        "dashboard_title": "Admin Dashboard",
+        "user": user,
+        "role": role,
+        "cards": cards,
+        "shortcuts": shortcuts,
+        "policies_labels": json.dumps(policies_labels),
+        "policies_data": json.dumps(policies_data),
+        "claims_labels": json.dumps(claims_labels),
+        "claims_data": json.dumps(claims_data),
+        "hospitals_labels": json.dumps(hospitals_labels),
+        "hospitals_data": json.dumps(hospitals_data),
+    }
+
+    return render(request, "dashboard/dashboard.html", context)

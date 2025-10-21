@@ -1,167 +1,173 @@
+{% extends "dashboard/base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>{{ dashboard_title }}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
+{% block title %}Admin Dashboard | HealthInsure{% endblock %}
 
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% block content %}
+<div class="p-6 space-y-8">
 
-  <!-- Inter Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-
-  <style>
-    body { font-family: 'Inter', sans-serif; }
-    .sidebar-link.active { background-color: #3b82f6; color: white; }
-  </style>
-</head>
-
-<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex">
-
-  <!-- Sidebar -->
-  <aside class="w-64 bg-white dark:bg-gray-800 h-screen shadow-lg flex flex-col fixed">
-    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-      <h2 class="text-2xl font-bold text-blue-600">Health<span class="text-gray-800 dark:text-gray-100">Insure</span></h2>
-    </div>
-
-    <nav class="flex-1 p-4 space-y-2">
-      <a href="{% url 'accounts:dashboard' %}" 
-         class="sidebar-link flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700 {% if request.path == '/dashboard/' %}active{% endif %}">
-        <span>🏠 Dashboard</span>
-      </a>
-
-      <a href="{% url 'clients:client_list' %}" 
-         class="sidebar-link flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700 {% if '/clients/' in request.path %}active{% endif %}">
-        <span>👥 Clients</span>
-      </a>
-
-      <a href="{% url 'policies:policy_list' %}" 
-         class="sidebar-link flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700 {% if '/policies/' in request.path %}active{% endif %}">
-        <span>📄 Policies</span>
-      </a>
-
-      <a href="{% url 'claims:claim_list' %}" 
-         class="sidebar-link flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700 {% if '/claims/' in request.path %}active{% endif %}">
-        <span>💰 Claims</span>
-      </a>
-
-      <a href="{% url 'hospitals:hospital_list' %}" 
-         class="sidebar-link flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700 {% if '/hospitals/' in request.path %}active{% endif %}">
-        <span>🏥 Hospitals</span>
-      </a>
-    </nav>
-
-    <div class="p-4 border-t border-gray-200 dark:border-gray-700">
-      <a href="{% url 'accounts:logout' %}" 
-         class="block text-center bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg transition">
-        Logout
-      </a>
-    </div>
-  </aside>
-
-  <!-- Main -->
-  <div class="flex-1 ml-64">
-    
-    <!-- Header -->
-    <header class="bg-white dark:bg-gray-800 shadow p-5 flex justify-between items-center sticky top-0 z-10">
-      <h1 class="text-2xl font-bold">{{ dashboard_title }}</h1>
-      <div class="flex items-center gap-4">
-        <span class="text-gray-600 dark:text-gray-300">👋 Hello, <strong>{{ user.username }}</strong> ({{ role|capfirst }})</span>
-      </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="p-8 space-y-10">
-
-      <!-- Stats Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-        {% for card in cards %}
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow hover:shadow-lg transition">
-          <div class="flex items-center justify-between">
-            <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400">{{ card.label }}</h2>
-            <span class="text-{{ card.color }}-500 text-xl">●</span>
-          </div>
-          <p class="text-3xl font-bold text-{{ card.color }}-600 mt-3">{{ card.value }}</p>
-        </div>
-        {% endfor %}
-      </div>
-
-      <!-- Admin Shortcuts -->
-      {% if shortcuts %}
-      <div>
-        <h3 class="text-lg font-semibold mb-4">Quick Actions</h3>
-        <div class="flex flex-wrap gap-4">
-          {% for shortcut in shortcuts %}
-          <a href="{{ shortcut.url }}" 
-             class="px-4 py-3 rounded-lg bg-{{ shortcut.color }}-500 text-white font-medium shadow hover:bg-{{ shortcut.color }}-600 transition">
-            {{ shortcut.name }}
-          </a>
-          {% endfor %}
-        </div>
-      </div>
-      {% endif %}
-
-      <!-- Charts -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
-          <h3 class="font-semibold mb-4 text-gray-700 dark:text-gray-200">Policy Distribution</h3>
-          <canvas id="policyChart"></canvas>
-        </div>
-
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
-          <h3 class="font-semibold mb-4 text-gray-700 dark:text-gray-200">Claims Overview</h3>
-          <canvas id="claimsChart"></canvas>
-        </div>
-
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
-          <h3 class="font-semibold mb-4 text-gray-700 dark:text-gray-200">Hospitals Status</h3>
-          <canvas id="hospitalChart"></canvas>
-        </div>
-      </div>
-
-    </main>
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+    <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100">👋 Welcome, {{ user.username|title }}</h1>
+    <p class="text-gray-500 dark:text-gray-400 mt-2 sm:mt-0">Role: {{ role|title }}</p>
   </div>
 
-  <!-- Chart.js Config -->
-  <script>
-    const chartColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+  <!-- Cards Section -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+    {% for card in cards %}
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow p-5 flex flex-col justify-between border border-gray-100 dark:border-gray-700">
+      <div>
+        <p class="text-sm text-gray-500 dark:text-gray-400">{{ card.label }}</p>
+        <h3 class="text-2xl font-bold text-{{ card.color }}-500 mt-1">{{ card.value }}</h3>
+      </div>
+      <div class="mt-3 h-1 bg-{{ card.color }}-500 rounded-full"></div>
+    </div>
+    {% endfor %}
+  </div>
 
-    new Chart(document.getElementById('policyChart'), {
-      type: 'doughnut',
-      data: {
-        labels: {{ policies_labels|safe }},
-        datasets: [{ data: {{ policies_data|safe }}, backgroundColor: chartColors }]
-      },
-      options: { plugins: { legend: { position: 'bottom' } }, responsive: true }
-    });
+  <!-- Quick Actions -->
+  {% if shortcuts %}
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow p-6">
+    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">⚡ Quick Actions</h2>
+    <div class="flex flex-wrap gap-3">
+      {% for shortcut in shortcuts %}
+      <a href="{{ shortcut.url }}" 
+         class="px-4 py-2 rounded-lg bg-{{ shortcut.color }}-500 text-white font-medium shadow hover:bg-{{ shortcut.color }}-600 transition">
+        {{ shortcut.name }}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
 
-    new Chart(document.getElementById('claimsChart'), {
-      type: 'bar',
-      data: {
-        labels: {{ claims_labels|safe }},
-        datasets: [{
-          label: 'Claims',
-          data: {{ claims_data|safe }},
-          backgroundColor: ['#f59e0b','#10b981','#ef4444']
-        }]
-      },
-      options: { responsive: true, plugins: { legend: { display: false } } }
-    });
+  <!-- Charts Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Policies Chart -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow p-6">
+      <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3">📋 Policy Types</h2>
+      <canvas id="policiesChart" height="200"></canvas>
+    </div>
 
-    new Chart(document.getElementById('hospitalChart'), {
-      type: 'pie',
-      data: {
-        labels: {{ hospitals_labels|safe }},
-        datasets: [{ data: {{ hospitals_data|safe }}, backgroundColor: ['#10b981','#ef4444'] }]
-      },
-      options: { plugins: { legend: { position: 'bottom' } }, responsive: true }
-    });
-  </script>
+    <!-- Claims Chart -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow p-6">
+      <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3">💰 Claims Overview</h2>
+      <canvas id="claimsChart" height="200"></canvas>
+    </div>
 
-</body>
-</html>
+    <!-- Hospitals Chart -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow p-6">
+      <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3">🏥 Hospital Verification</h2>
+      <canvas id="hospitalsChart" height="200"></canvas>
+    </div>
+  </div>
+
+  <!-- Monthly Revenue vs Claims Trend -->
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow p-6">
+    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3">📈 Monthly Revenue vs Claims Trend</h2>
+    <canvas id="trendChart" height="100"></canvas>
+  </div>
+
+  <!-- Footer -->
+  <div class="text-center text-sm text-gray-500 dark:text-gray-400 mt-8">
+    © {{ now|date:"Y" }} HealthInsure Dashboard. All rights reserved.
+  </div>
+
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const baseTextColor = document.documentElement.classList.contains('dark') ? '#E5E7EB' : '#374151';
+
+  // Policies Chart
+  new Chart(document.getElementById('policiesChart'), {
+    type: 'bar',
+    data: {
+      labels: {{ policies_labels|safe }},
+      datasets: [{
+        label: 'Total Policies',
+        data: {{ policies_data|safe }},
+        backgroundColor: '#3B82F6'
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { 
+        x: { ticks: { color: baseTextColor } },
+        y: { ticks: { color: baseTextColor } }
+      }
+    }
+  });
+
+  // Claims Chart
+  new Chart(document.getElementById('claimsChart'), {
+    type: 'doughnut',
+    data: {
+      labels: {{ claims_labels|safe }},
+      datasets: [{
+        data: {{ claims_data|safe }},
+        backgroundColor: ['#FACC15', '#22C55E', '#EF4444']
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { color: baseTextColor } }
+      }
+    }
+  });
+
+  // Hospitals Chart
+  new Chart(document.getElementById('hospitalsChart'), {
+    type: 'pie',
+    data: {
+      labels: {{ hospitals_labels|safe }},
+      datasets: [{
+        data: {{ hospitals_data|safe }},
+        backgroundColor: ['#14B8A6', '#9CA3AF']
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { color: baseTextColor } }
+      }
+    }
+  });
+
+  // Monthly Revenue vs Claims Trend
+  new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: {
+      labels: {{ months_labels|safe }},
+      datasets: [
+        {
+          label: 'Revenue Collected ($)',
+          data: {{ revenue_data|safe }},
+          borderColor: '#3B82F6',
+          backgroundColor: 'rgba(59,130,246,0.2)',
+          fill: true,
+          tension: 0.4
+        },
+        {
+          label: 'Claims Amount ($)',
+          data: {{ claims_amount_data|safe }},
+          borderColor: '#EF4444',
+          backgroundColor: 'rgba(239,68,68,0.2)',
+          fill: true,
+          tension: 0.4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom', labels: { color: baseTextColor } } },
+      scales: { 
+        x: { ticks: { color: baseTextColor } },
+        y: { ticks: { color: baseTextColor } }
+      }
+    }
+  });
+</script>
+{% endblock %}
