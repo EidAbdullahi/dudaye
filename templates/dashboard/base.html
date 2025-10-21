@@ -1,133 +1,121 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
+  <title>{% block title %}Dashboard{% endblock %}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Health Insurance Dashboard{% endblock %}</title>
 
-  <!-- TailwindCSS CDN -->
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Inter font -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-  <!-- Lucide icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Inter Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
     body { font-family: 'Inter', sans-serif; }
-    .sidebar-link.active {
-      background: linear-gradient(90deg, #2563eb, #3b82f6);
-      color: white !important;
-    }
-    .sidebar-link.active i {
-      color: white !important;
-    }
+    .sidebar-link.active { background-color: #3b82f6; color: white; }
   </style>
+
+  {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition">
 
-  <!-- NAVBAR -->
-  <nav class="bg-white dark:bg-gray-800 shadow-md px-6 py-3 flex justify-between items-center sticky top-0 z-30">
-    <div class="flex items-center space-x-3">
-      <i data-lucide="shield-check" class="w-6 h-6 text-blue-600"></i>
-      <span class="font-bold text-lg">Health<span class="text-blue-600">Insure</span></span>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex">
+
+  <!-- Sidebar -->
+  <aside class="w-64 bg-white dark:bg-gray-800 h-screen shadow-lg flex flex-col fixed">
+    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+      <h2 class="text-2xl font-bold text-blue-600">
+        Health<span class="text-gray-800 dark:text-gray-100">Insure</span>
+      </h2>
     </div>
 
-    <div class="flex items-center space-x-4">
-      <button id="darkModeToggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-        <i data-lucide="moon" class="w-5 h-5"></i>
-      </button>
+    <nav class="flex-1 p-4 space-y-2">
 
-      <!-- Profile Dropdown -->
-      <div class="relative group">
-        <button class="flex items-center space-x-2 focus:outline-none">
-          <i data-lucide="user" class="w-5 h-5 text-gray-500 dark:text-gray-300"></i>
-          <span>{{ user.username|capfirst }}</span>
-          <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400 group-hover:rotate-180 transition"></i>
-        </button>
-        <div class="absolute right-0 mt-2 hidden group-hover:block bg-white dark:bg-gray-800 rounded-lg shadow-lg w-44 z-20">
-          <div class="border-b border-gray-200 dark:border-gray-700 px-4 py-2 text-xs text-gray-500 dark:text-gray-400">
-            Role: {{ user.role|default:"User" }}
-          </div>
-          <a href="{% url 'accounts:logout' %}" class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Logout</a>
-        </div>
-      </div>
-    </div>
-  </nav>
+      <!-- 🏠 Dashboard -->
+      {% if user.role == 'hospital' %}
+        <a href="{% url 'hospitals:dashboard' %}"
+           class="sidebar-link flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700
+           {% if '/hospitals/dashboard' in request.path %}active{% endif %}">
+          🏥 <span>Hospital Dashboard</span>
+        </a>
+      {% else %}
+        <a href="{% url 'accounts:dashboard' %}"
+           class="sidebar-link flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700
+           {% if '/accounts/dashboard' in request.path %}active{% endif %}">
+          🏠 <span>Main Dashboard</span>
+        </a>
+      {% endif %}
 
-  <!-- LAYOUT WRAPPER -->
-  <div class="flex min-h-screen">
 
-    <!-- SIDEBAR -->
-    <aside class="hidden md:flex flex-col w-64 bg-white dark:bg-gray-800 h-screen shadow-lg p-4 space-y-2 sticky top-0">
-      
-      <a href="{% url 'accounts:dashboard' %}" 
-         class="sidebar-link flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 
-         {% if request.path == '/dashboard/' %}active{% endif %}">
-        <i data-lucide="layout-dashboard" class="w-5 h-5 text-blue-600"></i>
-        <span>Dashboard</span>
-      </a>
-
-      <a href="{% url 'clients:client_list' %}" 
-         class="sidebar-link flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 
+      <!-- 👥 Clients -->
+      {% if user.is_superuser or user.role in 'admin agent' %}
+      <a href="{% url 'clients:client_list' %}"
+         class="sidebar-link flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700
          {% if '/clients/' in request.path %}active{% endif %}">
-        <i data-lucide="users" class="w-5 h-5 text-green-600"></i>
-        <span>Clients</span>
-      </a>
-
-      <a href="{% url 'policies:policy_list' %}" 
-         class="sidebar-link flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 
-         {% if '/policies/' in request.path %}active{% endif %}">
-        <i data-lucide="file-text" class="w-5 h-5 text-yellow-600"></i>
-        <span>Policies</span>
-      </a>
-
-      <a href="{% url 'claims:claim_list' %}" 
-         class="sidebar-link flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 
-         {% if '/claims/' in request.path %}active{% endif %}">
-        <i data-lucide="clipboard-check" class="w-5 h-5 text-red-600"></i>
-        <span>Claims</span>
-      </a>
-
-      <a href="{% url 'hospitals:hospital_list' %}" 
-         class="sidebar-link flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 
-         {% if '/hospitals/' in request.path %}active{% endif %}">
-        <i data-lucide="building-2" class="w-5 h-5 text-purple-600"></i>
-        <span>Hospitals</span>
-      </a>
-
-      {% if user.role == 'admin' %}
-      <a href="{% url 'admin:index' %}" 
-         class="sidebar-link flex items-center space-x-3 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 
-         {% if '/admin/' in request.path %}active{% endif %}">
-        <i data-lucide="settings" class="w-5 h-5 text-gray-600"></i>
-        <span>Admin Settings</span>
+        👥 <span>Clients</span>
       </a>
       {% endif %}
-    </aside>
 
-    <!-- MAIN CONTENT -->
-    <main class="flex-1 p-8 bg-gray-50 dark:bg-gray-900 overflow-y-auto">
-      {% block content %}{% endblock %}
+      <!-- 📄 Policies -->
+      {% if user.is_superuser or user.role in 'admin finance_officer' %}
+      <a href="{% url 'policies:policy_list' %}"
+         class="sidebar-link flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700
+         {% if '/policies/' in request.path %}active{% endif %}">
+        📄 <span>Policies</span>
+      </a>
+      {% endif %}
+
+      <!-- 💰 Claims -->
+      {% if user.is_superuser or user.role in 'admin claim_officer finance_officer hospital agent' %}
+      <a href="{% url 'claims:claim_list' %}"
+         class="sidebar-link flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700
+         {% if '/claims/' in request.path %}active{% endif %}">
+        💰 <span>Claims</span>
+      </a>
+      {% endif %}
+
+      <!-- 🏥 Hospitals -->
+      {% if user.is_superuser or user.role == 'admin' %}
+      <a href="{% url 'hospitals:hospital_list' %}"
+         class="sidebar-link flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700
+         {% if '/hospitals/' in request.path and not '/dashboard/' in request.path %}active{% endif %}">
+        🏥 <span>Hospitals</span>
+      </a>
+      {% endif %}
+
+    </nav>
+
+    <div class="p-4 border-t border-gray-200 dark:border-gray-700">
+      <a href="{% url 'accounts:logout' %}"
+         class="block text-center bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg transition">
+        Logout
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="flex-1 ml-64">
+
+    <!-- Header -->
+    <header class="bg-white dark:bg-gray-800 shadow p-5 flex justify-between items-center sticky top-0 z-10">
+      <h1 class="text-2xl font-bold">
+        {% block header_title %}{{ dashboard_title }}{% endblock %}
+      </h1>
+      <div class="flex items-center gap-4">
+        <span class="text-gray-600 dark:text-gray-300">
+          👋 Hello, <strong>{{ user.username }}</strong> ({{ user.role|capfirst }})
+        </span>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <main class="p-8 space-y-6">
+      {% block content %}
+      {% endblock %}
     </main>
   </div>
 
-  <script>
-    lucide.createIcons();
-
-    // Dark Mode Toggle
-    const toggle = document.getElementById('darkModeToggle');
-    toggle.addEventListener('click', () => {
-      document.documentElement.classList.toggle('dark');
-      localStorage.setItem('darkMode', document.documentElement.classList.contains('dark'));
-    });
-
-    // Load dark mode preference
-    if (localStorage.getItem('darkMode') === 'true') {
-      document.documentElement.classList.add('dark');
-    }
-  </script>
+  {% block extra_scripts %}{% endblock %}
 </body>
 </html>

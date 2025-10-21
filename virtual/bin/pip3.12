@@ -1,4 +1,4 @@
-#!/home/baraka/Desktop/health_insurance/virtual/bin/python3
+#!/home/eid/dudaye/virtual/bin/python3
 import sys
 from pip._internal.cli.main import main
 if __name__ == '__main__':

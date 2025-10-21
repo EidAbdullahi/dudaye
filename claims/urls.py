@@ -11,5 +11,6 @@ urlpatterns = [
     path("approve/<int:pk>/", views.approve_claim, name="approve_claim"),
     path("reject/<int:pk>/", views.reject_claim, name="reject_claim"),
     path("reimburse/<int:pk>/", views.reimburse_claim, name="reimburse_claim"),  # ✅ ADD THIS
+    path("hospital-dashboard/", views.hospital_claim_dashboard, name="hospital_claim_dashboard"),
 
 ]

@@ -12,6 +12,44 @@ from hospitals.models import Hospital
 from accounts.utils import roles_required
 
 
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from .models import Claim
+
+
+
+@login_required(login_url="accounts:login")
+def hospital_claim_dashboard(request):
+    """Dashboard for hospitals to view and manage their submitted claims."""
+    user = request.user
+    hospital = getattr(user, "hospital_profile", None)
+
+    if not hospital:
+        messages.error(request, "Hospital profile not found.")
+        return redirect("accounts:dashboard")
+
+    # Stats
+    total_claims = Claim.objects.filter(hospital=hospital).count()
+    pending_claims = Claim.objects.filter(hospital=hospital, status="pending").count()
+    approved_claims = Claim.objects.filter(hospital=hospital, status="approved").count()
+    rejected_claims = Claim.objects.filter(hospital=hospital, status="rejected").count()
+
+    claims = Claim.objects.filter(hospital=hospital).select_related("client", "policy").order_by("-created_at")
+
+    context = {
+        "hospital": hospital,
+        "dashboard_title": f"{hospital.name} Claims Dashboard",
+        "total_claims": total_claims,
+        "pending_claims": pending_claims,
+        "approved_claims": approved_claims,
+        "rejected_claims": rejected_claims,
+        "claims": claims,
+    }
+
+    return render(request, "claims/hospital_dashboard.html", context)
+
+
 # -----------------------
 # 🧩 Claim List
 # -----------------------

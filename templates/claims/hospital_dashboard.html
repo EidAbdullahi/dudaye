@@ -1,0 +1,88 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Hospital Claim Dashboard{% endblock %}
+
+{% block content %}
+<div class="p-8">
+  <h1 class="text-2xl font-bold text-gray-800 mb-6">{{ dashboard_title }}</h1>
+
+  <!-- Summary Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+    <div class="bg-blue-500 text-white p-6 rounded-2xl shadow">
+      <p class="text-sm opacity-80">Total Claims</p>
+      <p class="text-3xl font-bold">{{ total_claims }}</p>
+    </div>
+    <div class="bg-yellow-500 text-white p-6 rounded-2xl shadow">
+      <p class="text-sm opacity-80">Pending</p>
+      <p class="text-3xl font-bold">{{ pending_claims }}</p>
+    </div>
+    <div class="bg-green-500 text-white p-6 rounded-2xl shadow">
+      <p class="text-sm opacity-80">Approved</p>
+      <p class="text-3xl font-bold">{{ approved_claims }}</p>
+    </div>
+    <div class="bg-red-500 text-white p-6 rounded-2xl shadow">
+      <p class="text-sm opacity-80">Rejected</p>
+      <p class="text-3xl font-bold">{{ rejected_claims }}</p>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-xl font-semibold text-gray-700">My Claims</h2>
+    <a href="{% url 'claims:add_claim' %}" 
+       class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow hover:bg-indigo-700 transition">
+      ➕ Submit New Claim
+    </a>
+  </div>
+
+  <!-- Claims Table -->
+  <div class="overflow-x-auto bg-white rounded-2xl shadow-lg">
+    <table class="min-w-full text-sm text-gray-700">
+      <thead class="bg-gray-100 text-gray-800 uppercase text-xs">
+        <tr>
+          <th class="px-6 py-3 text-left">Claim #</th>
+          <th class="px-6 py-3 text-left">Client</th>
+          <th class="px-6 py-3 text-left">Policy</th>
+          <th class="px-6 py-3 text-left">Amount</th>
+          <th class="px-6 py-3 text-left">Status</th>
+          <th class="px-6 py-3 text-left">Created</th>
+          <th class="px-6 py-3 text-center">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for claim in claims %}
+          <tr class="border-b hover:bg-gray-50">
+            <td class="px-6 py-4">{{ claim.claim_number }}</td>
+            <td class="px-6 py-4">{{ claim.client.first_name }} {{ claim.client.last_name }}</td>
+            <td class="px-6 py-4">{{ claim.policy.policy_number }}</td>
+            <td class="px-6 py-4">${{ claim.amount }}</td>
+            <td class="px-6 py-4">
+              {% if claim.status == "pending" %}
+                <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-semibold">Pending</span>
+              {% elif claim.status == "approved" %}
+                <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold">Approved</span>
+              {% elif claim.status == "rejected" %}
+                <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-semibold">Rejected</span>
+              {% elif claim.status == "reimbursed" %}
+                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-semibold">Reimbursed</span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4">{{ claim.created_at|date:"M d, Y" }}</td>
+            <td class="px-6 py-4 text-center">
+              <a href="{% url 'claims:claim_detail' claim.id %}" 
+                 class="text-indigo-600 hover:text-indigo-800 font-medium">View</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+              No claims submitted yet.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

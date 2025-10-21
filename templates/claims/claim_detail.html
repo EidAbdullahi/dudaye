@@ -1,20 +1,22 @@
-{% extends 'dashboard/base.html' %}
+{% extends "dashboard/base.html" %}
 {% load static %}
 
 {% block title %}{{ dashboard_title }} | Health Insurance{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto p-6 bg-white rounded-2xl shadow-lg mt-8">
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">{{ dashboard_title }}</h1>
-    <a href="{% url 'claims:claim_list' %}" 
+<div class="max-w-5xl mx-auto bg-white rounded-2xl shadow-md p-8 mt-8">
+
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-3xl font-bold text-gray-800">{{ dashboard_title }}</h1>
+    <a href="{% url 'claims:claim_list' %}"
        class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
       ← Back to Claims
     </a>
   </div>
 
-  <!-- Claim Information -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-800">
+  <!-- Claim Info Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-gray-800">
     <div>
       <p class="font-semibold">Claim Number:</p>
       <p>{{ claim.claim_number }}</p>
@@ -42,20 +44,24 @@
 
     <div>
       <p class="font-semibold">Status:</p>
-      <span class="capitalize 
-        {% if claim.status == 'approved' %}text-green-600{% elif claim.status == 'rejected' %}text-red-600{% else %}text-yellow-600{% endif %}">
+      <p class="
+        capitalize font-semibold
+        {% if claim.status == 'approved' %}text-green-600
+        {% elif claim.status == 'rejected' %}text-red-600
+        {% else %}text-yellow-600{% endif %}
+      ">
         {{ claim.status }}
-      </span>
+      </p>
     </div>
 
     <div class="md:col-span-2">
       <p class="font-semibold">Notes / Description:</p>
-      <p>{{ claim.notes|default:"N/A" }}</p>
+      <p class="text-gray-700">{{ claim.notes|default:"N/A" }}</p>
     </div>
 
     <div>
       <p class="font-semibold">Created By:</p>
-      <p>{{ claim.created_by }}</p>
+      <p>{{ claim.created_by }} ({{ claim.created_by.role|default:"User" }})</p>
     </div>
 
     <div>
@@ -64,52 +70,54 @@
     </div>
   </div>
 
-  <!-- Admin / Officer Actions -->
-  {% if role == "admin" or role == "claim_officer" %}
-  <div class="mt-8 border-t pt-6">
-    <h2 class="text-lg font-semibold text-gray-800 mb-3">Actions</h2>
-    <div class="flex flex-wrap gap-3">
+  <!-- Admin / Claim Officer Actions -->
+  {% if role == 'admin' or role == 'claim_officer' %}
+    <div class="mt-10 border-t pt-6">
+      <h2 class="text-lg font-semibold text-gray-800 mb-4">Administrative Actions</h2>
+      <div class="flex flex-wrap gap-3">
+        <a href="{% url 'claims:edit_claim' claim.id %}"
+           class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition">
+          ✏️ Edit
+        </a>
 
-      <!-- Edit -->
-      <a href="{% url 'claims:edit_claim' claim.id %}" 
-         class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
-        ✏️ Edit
-      </a>
+        {% if claim.status != 'approved' %}
+        <form method="POST" action="{% url 'claims:approve_claim' claim.id %}">
+          {% csrf_token %}
+          <button type="submit"
+                  class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+            ✅ Approve
+          </button>
+        </form>
+        {% endif %}
 
-      <!-- Approve -->
-      {% if claim.status != "approved" %}
-      <form method="POST" action="{% url 'claims:approve_claim' claim.id %}">
-        {% csrf_token %}
-        <button type="submit" 
-                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-          ✅ Approve
-        </button>
-      </form>
-      {% endif %}
+        {% if claim.status != 'rejected' %}
+        <form method="POST" action="{% url 'claims:reject_claim' claim.id %}">
+          {% csrf_token %}
+          <button type="submit"
+                  class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+            ❌ Reject
+          </button>
+        </form>
+        {% endif %}
 
-      <!-- Reject -->
-      {% if claim.status != "rejected" %}
-      <form method="POST" action="{% url 'claims:reject_claim' claim.id %}">
-        {% csrf_token %}
-        <button type="submit" 
-                class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
-          ❌ Reject
-        </button>
-      </form>
-      {% endif %}
-
-      <!-- Reimburse (Admin Only) -->
-      {% if role == "admin" and claim.status == "approved" %}
-      <form method="POST" action="{% url 'claims:reimburse_claim' claim.id %}">
-        {% csrf_token %}
-        <button type="submit" 
-                class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
-          💰 Mark as Reimbursed
-        </button>
-      </form>
-      {% endif %}
+        {% if claim.status == 'approved' %}
+        <form method="POST" action="{% url 'claims:reimburse_claim' claim.id %}">
+          {% csrf_token %}
+          <button type="submit"
+                  class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+            💰 Mark as Reimbursed
+          </button>
+        </form>
+        {% endif %}
+      </div>
     </div>
-  </div>
+  {% endif %}
+
+  <!-- Hospital View Note -->
+  {% if role == 'hospital' %}
+    <div class="mt-8 text-sm text-gray-500 italic">
+      <p>Hospitals can view submitted claims but cannot modify or approve them.</p>
+    </div>
   {% endif %}
 </div>
 {% endblock %}

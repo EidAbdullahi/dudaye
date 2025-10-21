@@ -124,29 +124,60 @@ def hospital_form(request, pk=None):
     return render(request, "hospitals/hospital_form.html", context)
 
 
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from claims.models import Claim
+
+from django.db.models import Sum
+
 @login_required
-@roles_required("hospital")
 def hospital_dashboard(request):
     """
-    Hospital dashboard: shows submitted claims & quick actions
-    Only for hospital users.
+    Modern Hospital Dashboard:
+    - Displays claim stats
+    - Lists recent claims
+    - Revenue collected
     """
     user = request.user
+
+    # ✅ Verify hospital profile
     hospital = getattr(user, "hospital_profile", None)
     if not hospital:
         messages.error(request, "Your hospital profile is missing. Contact admin.")
-        return redirect("hospitals:hospital_list")
+        return redirect("accounts:dashboard")
 
-    claims = Claim.objects.filter(hospital=hospital).order_by('-created_at')
+    # ✅ Query all claims linked to this hospital
+    claims = Claim.objects.filter(hospital=hospital).order_by("-created_at")
 
+    # ✅ Calculate statistics
+    total_claims = claims.count()
+    pending_claims = claims.filter(status="pending").count()
+    approved_claims = claims.filter(status="approved").count()
+    rejected_claims = claims.filter(status="rejected").count()
+
+    # ✅ Calculate revenue collected (sum of approved claim amounts)
+    revenue_collected = claims.filter(status="approved").aggregate(
+        total=Sum('amount')
+    )['total'] or 0
+
+    # ✅ Prepare context for UI
     context = {
-        "dashboard_title": "Hospital Dashboard",
+        "dashboard_title": f"{hospital.name} Dashboard",
         "user": user,
-        "role": user.role,
+        "role": getattr(user, "role", "hospital"),
         "hospital": hospital,
         "claims": claims,
+        "total_claims": total_claims,
+        "pending_claims": pending_claims,
+        "approved_claims": approved_claims,
+        "rejected_claims": rejected_claims,
+        "revenue_collected": revenue_collected,  # <--- Added here
+        "recent_claims": claims[:5],  # latest 5
     }
+
     return render(request, "hospitals/dashboard.html", context)
+
 
 
 @login_required

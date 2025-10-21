@@ -1,54 +1,85 @@
-{% extends 'dashboard/base.html' %}
+{% extends "base.html" %}
+{% load static %}
 
-{% block title %}{{ dashboard_title }} | Health Insurance{% endblock %}
+{% block title %}{{ dashboard_title }}{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-lg mt-8">
+<div class="p-8 space-y-8">
 
-  <h1 class="text-2xl font-bold mb-4">{{ dashboard_title }}</h1>
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h1 class="text-3xl font-bold text-blue-600">{{ dashboard_title }}</h1>
+      <p class="text-gray-500 dark:text-gray-400">Submit a new claim for your hospital’s patients</p>
+    </div>
+    <a href="{% url 'hospitals:dashboard' %}" 
+       class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-5 py-3 rounded-lg transition">
+      ← Back to Dashboard
+    </a>
+  </div>
 
-  {% if messages %}
-    {% for message in messages %}
-      <div class="mb-4 px-4 py-2 rounded {{ message.tags|default:'bg-gray-100 text-gray-800' }}">
-        {{ message }}
-      </div>
-    {% endfor %}
-  {% endif %}
+  <!-- Claim Form -->
+  <div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg max-w-3xl mx-auto">
+    <form method="POST" class="space-y-6">
+      {% csrf_token %}
 
-  <form method="POST" class="space-y-4">
-    {% csrf_token %}
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Client Selection -->
       <div>
-        <label class="block font-semibold mb-1">Client</label>
-        <select name="client" class="w-full border px-3 py-2 rounded">
-          <option value="">Select Client</option>
+        <label for="client" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Select Client
+        </label>
+        <select name="client" id="client" required
+          class="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-3 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-blue-500">
+          <option value="">-- Choose Client --</option>
           {% for client in clients %}
-            <option value="{{ client.id }}">{{ client.first_name }} {{ client.last_name }}</option>
+            <option value="{{ client.id }}">{{ client.full_name }} ({{ client.policy_number }})</option>
           {% endfor %}
         </select>
       </div>
 
+      <!-- Policy Selection -->
       <div>
-        <label class="block font-semibold mb-1">Policy</label>
-        <select name="policy" class="w-full border px-3 py-2 rounded">
-          <option value="">Select Policy</option>
+        <label for="policy" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Select Policy
+        </label>
+        <select name="policy" id="policy" required
+          class="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-3 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-blue-500">
+          <option value="">-- Choose Policy --</option>
           {% for policy in policies %}
-            <option value="{{ policy.id }}">{{ policy.name }}</option>
+            <option value="{{ policy.id }}">{{ policy.policy_number }} - {{ policy.plan_name }}</option>
           {% endfor %}
         </select>
       </div>
 
+      <!-- Claim Amount -->
       <div>
-        <label class="block font-semibold mb-1">Amount</label>
-        <input type="number" name="amount" class="w-full border px-3 py-2 rounded">
+        <label for="amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Claim Amount (USD)
+        </label>
+        <input type="number" step="0.01" min="0" name="amount" id="amount" required
+          placeholder="Enter claim amount"
+          class="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-3 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-blue-500">
       </div>
-    </div>
 
-    <div class="flex justify-end space-x-2 mt-4">
-      <a href="{% url 'hospitals:dashboard' %}" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">Cancel</a>
-      <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Submit Claim</button>
-    </div>
-  </form>
+      <!-- Notes -->
+      <div>
+        <label for="notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Additional Notes (Optional)
+        </label>
+        <textarea name="notes" id="notes" rows="4" 
+          class="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-3 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+          placeholder="Add any relevant details about this claim..."></textarea>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="pt-4">
+        <button type="submit" 
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">
+          💾 Submit Claim
+        </button>
+      </div>
+    </form>
+  </div>
+
 </div>
 {% endblock %}

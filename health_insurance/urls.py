@@ -1,16 +1,14 @@
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
-
-# Main views
-from accounts.views import dashboard
+from accounts.views import dashboard  # main dashboard
 
 # =========================
 # 🌐 API Routers
 # =========================
 router = routers.DefaultRouter()
 
-# Import ViewSets **inside here** to avoid circular imports
+# Import ViewSets safely to avoid circular imports
 from clients.views import ClientViewSet
 from policies.views import PolicyViewSet
 from claims.views import ClaimViewSet
@@ -25,21 +23,39 @@ router.register(r'hospitals', HospitalViewSet)
 # 🌍 URL Patterns
 # =========================
 urlpatterns = [
-    # Admin panel
+    # 🧭 Django Admin
     path('admin/', admin.site.urls),
 
-    # Authentication & accounts
+    # 🔐 User Accounts (Login, Register, Logout)
     path('accounts/', include(('accounts.urls', 'accounts'), namespace='accounts')),
 
-    # Dashboard (main entry)
+    # 🧮 Main Dashboard (for Admin / Claim Officer / Finance)
     path('dashboard/', dashboard, name='main_dashboard'),
 
-    # Apps
-    path('clients/', include(('clients.urls', 'clients'), namespace='clients')),
-    path('policies/', include(('policies.urls', 'policies'), namespace='policies')),
-    path('claims/', include(('claims.urls', 'claims'), namespace='claims')),
+    # 🏥 Hospital App (Dashboard, Management, etc.)
     path('hospitals/', include(('hospitals.urls', 'hospitals'), namespace='hospitals')),
 
-    # REST API
+    # 💰 Claims App (Includes hospital dashboard + claim management)
+    path('claims/', include(('claims.urls', 'claims'), namespace='claims')),
+
+    # 👥 Clients App
+    path('clients/', include(('clients.urls', 'clients'), namespace='clients')),
+
+    # 📑 Policies App
+    path('policies/', include(('policies.urls', 'policies'), namespace='policies')),
+
+    # 🌐 REST API Endpoints
     path('api/', include(router.urls)),
+
+    # 🔑 API Authentication (DRF Browsable API login)
+    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]
+
+# =========================
+# ⚙️ Optional: Static/Media (if using local file uploads)
+# =========================
+from django.conf import settings
+from django.conf.urls.static import static
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

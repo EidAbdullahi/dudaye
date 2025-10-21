@@ -21,4 +21,6 @@ urlpatterns = [
 
     # Submit claim (for hospital users)
     path("submit-claim/", views.submit_claim, name="submit_claim"),
+    path('dashboard/', views.hospital_dashboard, name='dashboard'),
+
 ]

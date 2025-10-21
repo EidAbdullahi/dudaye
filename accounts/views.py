@@ -63,7 +63,7 @@ def login_view(request):
                 elif role == "finance_officer":
                     return redirect('hospitals:hospital_list')
                 elif role == "hospital":
-                    return redirect('hospitals:dashboard')
+                    return redirect('claims:hospital_claim_dashboard')
                 else:
                     return redirect('accounts:dashboard')
         else:
