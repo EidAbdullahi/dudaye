@@ -2,93 +2,186 @@
 {% load widget_tweaks %}
 
 {% block content %}
-<div class="container my-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card shadow-lg rounded-4 border-0">
-                <div class="card-header bg-gradient-primary text-white rounded-top-4">
-                    <h4 class="mb-0">{{ dashboard_title }}</h4>
-                </div>
-                <div class="card-body p-4">
-
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-
-                    <form method="post" enctype="multipart/form-data" novalidate>
-                        {% csrf_token %}
-
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-6 form-floating">
-                                {{ form.first_name|add_class:"form-control" }}
-                                <label for="{{ form.first_name.id_for_label }}">First Name</label>
-                                {% if form.first_name.errors %}
-                                    <div class="text-danger small mt-1">{{ form.first_name.errors }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6 form-floating">
-                                {{ form.last_name|add_class:"form-control" }}
-                                <label for="{{ form.last_name.id_for_label }}">Last Name</label>
-                                {% if form.last_name.errors %}
-                                    <div class="text-danger small mt-1">{{ form.last_name.errors }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-6 form-floating">
-                                {{ form.email|add_class:"form-control" }}
-                                <label for="{{ form.email.id_for_label }}">Email</label>
-                                {% if form.email.errors %}
-                                    <div class="text-danger small mt-1">{{ form.email.errors }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6 form-floating">
-                                {{ form.phone|add_class:"form-control" }}
-                                <label for="{{ form.phone.id_for_label }}">Phone</label>
-                                {% if form.phone.errors %}
-                                    <div class="text-danger small mt-1">{{ form.phone.errors }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="fingerprint_file" class="form-label">Fingerprint</label>
-                            <input type="file" name="fingerprint_file" class="form-control">
-                        </div>
-
-                        <div class="mb-3 form-floating">
-                            {{ form.photo|add_class:"form-control" }}
-                            <label for="{{ form.photo.id_for_label }}">Photo</label>
-                        </div>
-
-                        <div class="d-flex justify-content-end mt-4">
-                            <a href="{% url 'clients:client_list' %}" class="btn btn-outline-secondary me-2">Cancel</a>
-                            <button type="submit" class="btn btn-primary btn-lg px-4">Save Client</button>
-                        </div>
-                    </form>
-
-                </div>
-            </div>
-        </div>
+<div class="modern-form-wrapper min-vh-100 d-flex align-items-center justify-content-center py-5">
+  <div class="modern-card p-5 shadow-lg">
+    <div class="text-center mb-5">
+      <div class="icon-circle mb-3">
+        <i class="bi bi-person-badge fs-1 text-primary"></i>
+      </div>
+      <h2 class="fw-bold text-gradient">{{ dashboard_title|default:"Add New Client" }}</h2>
+      <p class="text-muted">Fill out the client’s details below to continue.</p>
     </div>
+
+    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+      {% csrf_token %}
+
+      <!-- Personal Info -->
+      <div class="row g-3 mb-3">
+        <div class="col-md-6 position-relative">
+          <i class="bi bi-person input-icon"></i>
+          {{ form.first_name|add_class:"form-control modern-input ps-5" }}
+          <label class="floating-label">First Name</label>
+        </div>
+        <div class="col-md-6 position-relative">
+          <i class="bi bi-person input-icon"></i>
+          {{ form.last_name|add_class:"form-control modern-input ps-5" }}
+          <label class="floating-label">Last Name</label>
+        </div>
+      </div>
+
+      <!-- Contact Info -->
+      <div class="row g-3 mb-3">
+        <div class="col-md-6 position-relative">
+          <i class="bi bi-envelope input-icon"></i>
+          {{ form.email|add_class:"form-control modern-input ps-5" }}
+          <label class="floating-label">Email</label>
+        </div>
+        <div class="col-md-6 position-relative">
+          <i class="bi bi-telephone input-icon"></i>
+          {{ form.phone|add_class:"form-control modern-input ps-5" }}
+          <label class="floating-label">Phone</label>
+        </div>
+      </div>
+
+      <!-- Fingerprint Upload -->
+      <div class="mb-4">
+        <label class="form-label fw-semibold text-secondary">
+          <i class="bi bi-fingerprint me-1"></i> Fingerprint File
+        </label>
+        <input type="file" name="fingerprint_file" class="form-control modern-input">
+      </div>
+
+      <!-- Photo Upload -->
+      <div class="mb-4">
+        <label class="form-label fw-semibold text-secondary">
+          <i class="bi bi-image me-1"></i> Photo
+        </label>
+        {{ form.photo|add_class:"form-control modern-input" }}
+      </div>
+
+      <!-- Buttons -->
+      <div class="d-flex justify-content-end gap-3">
+        <a href="{% url 'clients:client_list' %}" class="btn btn-outline-light modern-btn-cancel">
+          <i class="bi bi-x-circle me-1"></i> Cancel
+        </a>
+        <button type="submit" class="btn btn-primary modern-btn-save">
+          <i class="bi bi-save2 me-1"></i> Save Client
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 
+<!-- Custom Modern Styles -->
 <style>
-    .bg-gradient-primary {
-        background: linear-gradient(90deg, #4b6cb7, #182848);
-    }
-    .card-header h4 {
-        font-weight: 600;
-    }
-    .form-floating > .form-control:focus ~ label {
-        color: #4b6cb7;
-        transform: scale(.85) translateY(-1rem) translateX(.15rem);
-    }
+  :root {
+    --gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
+    --bg-blur: rgba(255, 255, 255, 0.2);
+    --input-bg: rgba(255, 255, 255, 0.12);
+    --border-color: rgba(255, 255, 255, 0.3);
+  }
+
+  body {
+    background: linear-gradient(120deg, #0f172a, #1e293b, #0f172a);
+    background-size: 400% 400%;
+    animation: bgMove 10s ease infinite;
+    color: #fff;
+  }
+
+  @keyframes bgMove {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .modern-card {
+    backdrop-filter: blur(20px);
+    background: var(--bg-blur);
+    border: 1px solid var(--border-color);
+    border-radius: 1.5rem;
+    width: 100%;
+    max-width: 800px;
+    transition: all 0.3s ease;
+  }
+
+  .modern-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(99, 102, 241, 0.2);
+  }
+
+  .icon-circle {
+    width: 70px;
+    height: 70px;
+    background: var(--gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+  }
+
+  .text-gradient {
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .modern-input {
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    color: #fff;
+    height: 55px;
+    transition: all 0.3s ease;
+  }
+
+  .modern-input:focus {
+    border-color: #818cf8;
+    box-shadow: 0 0 10px rgba(129, 140, 248, 0.4);
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  .input-icon {
+    position: absolute;
+    top: 16px;
+    left: 15px;
+    color: #a5b4fc;
+    font-size: 1.1rem;
+  }
+
+  .floating-label {
+    position: absolute;
+    top: -10px;
+    left: 45px;
+    font-size: 0.8rem;
+    color: #a5b4fc;
+    background-color: transparent;
+  }
+
+  .modern-btn-save {
+    background: var(--gradient);
+    border: none;
+    border-radius: 0.75rem;
+    padding: 10px 25px;
+    font-weight: 600;
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+    transition: all 0.3s ease;
+  }
+
+  .modern-btn-save:hover {
+    box-shadow: 0 0 30px rgba(139, 92, 246, 0.6);
+    transform: scale(1.03);
+  }
+
+  .modern-btn-cancel {
+    border: 1px solid #cbd5e1;
+    color: #cbd5e1;
+    border-radius: 0.75rem;
+    padding: 10px 25px;
+    transition: all 0.3s ease;
+  }
+
+  .modern-btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+  }
 </style>
 {% endblock %}

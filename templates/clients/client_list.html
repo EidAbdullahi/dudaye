@@ -4,76 +4,109 @@
 {% block title %}Clients Dashboard | Health Insurance{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-  <div class="flex justify-between items-center mb-4">
-    <h1 class="text-2xl font-bold text-gray-800">{{ dashboard_title }}</h1>
-    <a href="{% url 'clients:add_client' %}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
+    <h1 class="text-3xl font-bold text-gray-800 flex items-center gap-2">
+      👥 Clients Dashboard
+    </h1>
+    <a href="{% url 'clients:add_client' %}"
+       class="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold rounded-xl shadow hover:from-blue-700 hover:to-blue-600 transition">
       ➕ Add Client
     </a>
   </div>
 
+  <!-- Messages -->
   {% if messages %}
-    {% for message in messages %}
-      <div class="mb-4 px-4 py-2 rounded {{ message.tags|default:'bg-gray-100 text-gray-800' }}">
-        {{ message }}
-      </div>
-    {% endfor %}
+    <div class="space-y-2 mb-4">
+      {% for message in messages %}
+        <div class="px-4 py-3 rounded-lg text-white {% if message.tags == 'success' %}bg-green-600{% elif message.tags == 'error' %}bg-red-600{% else %}bg-gray-600{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
   {% endif %}
 
-  <div class="overflow-x-auto shadow rounded-lg">
+  <!-- Table Container -->
+  <div class="overflow-x-auto bg-white rounded-2xl shadow-md border border-gray-100">
     <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-50">
+      <thead class="bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
         <tr>
-          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Photo</th>
-          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name</th>
-          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DOB</th>
-          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
-          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
-          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agent</th>
-          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registered By</th>
-          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Registered</th>
-          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">#</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Photo</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Full Name</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Email</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Phone</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">DOB</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Gender</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Agent</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Registered By</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Date Registered</th>
+          <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Actions</th>
         </tr>
       </thead>
-      <tbody class="bg-white divide-y divide-gray-200">
+
+      <tbody class="bg-white divide-y divide-gray-100">
         {% for client in clients %}
-        <tr class="hover:bg-gray-50">
-          <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{{ forloop.counter }}</td>
-          <td class="px-4 py-2 whitespace-nowrap">
+        <tr class="hover:bg-blue-50 transition">
+          <td class="px-4 py-3 text-sm text-gray-500">{{ forloop.counter }}</td>
+
+          <td class="px-4 py-3">
             {% if client.photo %}
-              <img src="{{ client.photo.url }}" class="h-10 w-10 rounded-full object-cover" alt="{{ client.first_name }}">
+              <img src="{{ client.photo.url }}" alt="{{ client.first_name }}" class="h-10 w-10 rounded-full object-cover border border-gray-200">
             {% else %}
-              <div class="h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 text-xs">N/A</div>
+              <div class="h-10 w-10 flex items-center justify-center bg-gray-100 text-gray-400 text-xs rounded-full border">N/A</div>
             {% endif %}
           </td>
-          <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">{{ client.first_name }} {{ client.last_name }}</td>
-          <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{{ client.email }}</td>
-          <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{{ client.phone }}</td>
-          <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{{ client.dob|date:"M d, Y" }}</td>
-          <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{{ client.gender }}</td>
-          <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{{ client.address }}</td>
-          <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{{ client.agent }}</td>
-          <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{{ client.registered_by }}</td>
-          <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{{ client.created_at|date:"M d, Y" }}</td>
-          <td class="px-4 py-2 whitespace-nowrap text-sm font-medium flex space-x-2">
-            <a href="{% url 'clients:edit_client' client.id %}" class="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition text-xs">Edit</a>
-            <a href="{% url 'clients:client_detail' client.id %}" class="px-2 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition text-xs">View</a>
+
+          <td class="px-4 py-3 font-semibold text-gray-800">
+            {{ client.first_name }} {{ client.last_name }}
+          </td>
+
+          <td class="px-4 py-3 text-sm text-gray-600">{{ client.email }}</td>
+          <td class="px-4 py-3 text-sm text-gray-600">{{ client.phone }}</td>
+          <td class="px-4 py-3 text-sm text-gray-600">{{ client.dob|date:"M d, Y" }}</td>
+          <td class="px-4 py-3 text-sm text-gray-600">{{ client.gender|default:"—" }}</td>
+          <td class="px-4 py-3 text-sm text-gray-600">{{ client.agent|default:"—" }}</td>
+          <td class="px-4 py-3 text-sm text-gray-600">{{ client.registered_by|default:"—" }}</td>
+          <td class="px-4 py-3 text-sm text-gray-600">{{ client.created_at|date:"M d, Y" }}</td>
+
+          <td class="px-4 py-3 text-sm text-center">
+            <div class="flex justify-center gap-2">
+              <a href="{% url 'clients:edit_client' client.id %}" 
+                 class="inline-flex items-center px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 transition text-xs font-medium">
+                 ✏ Edit
+              </a>
+              <a href="{% url 'clients:client_detail' client.id %}" 
+                 class="inline-flex items-center px-3 py-1 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition text-xs font-medium">
+                 👁 View
+              </a>
+            </div>
           </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="12" class="px-4 py-2 text-center text-gray-500">
-            No clients found. Click "Add Client" to register.
+          <td colspan="11" class="px-4 py-10 text-center text-gray-500 text-sm">
+            😕 No clients found. 
+            <a href="{% url 'clients:add_client' %}" class="text-blue-600 font-semibold hover:underline">Add one now</a>.
           </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-
 </div>
+
+<!-- Optional Styling -->
+<style>
+  thead th {
+    backdrop-filter: blur(8px);
+  }
+  @media (max-width: 640px) {
+    table {
+      font-size: 0.875rem;
+    }
+  }
+</style>
 {% endblock %}
