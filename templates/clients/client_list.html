@@ -17,6 +17,44 @@
     </a>
   </div>
 
+  <!-- Search & Filter Form -->
+  <form method="get" class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+    <div class="flex items-center gap-2 w-full sm:w-1/2">
+      <input type="text" name="search" value="{{ request.GET.search }}" 
+             placeholder="🔍 Search clients (name, email, phone)"
+             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition">
+    </div>
+
+    <div class="flex items-center gap-2 w-full sm:w-auto">
+      <select name="gender" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition">
+        <option value="">All Genders</option>
+        <option value="Male" {% if request.GET.gender == "Male" %}selected{% endif %}>Male</option>
+        <option value="Female" {% if request.GET.gender == "Female" %}selected{% endif %}>Female</option>
+        <option value="Other" {% if request.GET.gender == "Other" %}selected{% endif %}>Other</option>
+      </select>
+
+      {% if agents %}
+      <select name="agent" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition">
+        <option value="">All Agents</option>
+        {% for agent in agents %}
+          <option value="{{ agent.id }}" {% if request.GET.agent == agent.id|stringformat:"s" %}selected{% endif %}>
+            {{ agent.get_full_name|default:agent.username }}
+          </option>
+        {% endfor %}
+      </select>
+      {% endif %}
+
+      <button type="submit"
+              class="px-5 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
+        Filter
+      </button>
+      <a href="{% url 'clients:client_list' %}" 
+         class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition">
+        Reset
+      </a>
+    </div>
+  </form>
+
   <!-- Messages -->
   {% if messages %}
     <div class="space-y-2 mb-4">
@@ -96,6 +134,25 @@
       </tbody>
     </table>
   </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+  <div class="flex justify-center mt-6 items-center gap-2">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}&search={{ request.GET.search }}&gender={{ request.GET.gender }}&agent={{ request.GET.agent }}"
+         class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">← Prev</a>
+    {% endif %}
+
+    <span class="px-3 py-1 font-semibold text-gray-700">
+      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </span>
+
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}&search={{ request.GET.search }}&gender={{ request.GET.gender }}&agent={{ request.GET.agent }}"
+         class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">Next →</a>
+    {% endif %}
+  </div>
+  {% endif %}
 </div>
 
 <!-- Optional Styling -->
