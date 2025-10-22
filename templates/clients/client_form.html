@@ -1,92 +1,99 @@
 {% extends 'dashboard/base.html' %}
 {% load static %}
+{% load widget_tweaks %}
 
-{% block title %}{{ dashboard_title }} | Health Insurance{% endblock %}
+{% block title %}{{ dashboard_title }} | CareSource Africa{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-lg mt-8">
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-white rounded-2xl shadow-lg">
 
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">{{ dashboard_title }}</h1>
-    <a href="{% url 'clients:client_list' %}" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
-      ⬅ Back to Clients
-    </a>
-  </div>
+  <h2 class="text-2xl font-bold mb-6">{{ dashboard_title }}</h2>
 
-  {% if messages %}
-    {% for message in messages %}
-      <div class="mb-4 px-4 py-2 rounded {{ message.tags|default:'bg-gray-100 text-gray-800' }}">
-        {{ message }}
-      </div>
-    {% endfor %}
-  {% endif %}
+  <form method="post" enctype="multipart/form-data" class="space-y-4">
+      {% csrf_token %}
 
-  <form method="POST" enctype="multipart/form-data" class="space-y-4">
-    {% csrf_token %}
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-gray-700 font-semibold mb-1">First Name</label>
-        {{ form.first_name }}
-        {% if form.first_name.errors %}
-          <div class="text-red-600 text-sm">{{ form.first_name.errors }}</div>
-        {% endif %}
-      </div>
-
-      <div>
-        <label class="block text-gray-700 font-semibold mb-1">Last Name</label>
-        {{ form.last_name }}
-        {% if form.last_name.errors %}
-          <div class="text-red-600 text-sm">{{ form.last_name.errors }}</div>
-        {% endif %}
-      </div>
-
-      <div>
-        <label class="block text-gray-700 font-semibold mb-1">Email</label>
-        {{ form.email }}
-      </div>
-
-      <div>
-        <label class="block text-gray-700 font-semibold mb-1">Phone</label>
-        {{ form.phone }}
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          {{ form.first_name.label_tag }}<br>
+          {{ form.first_name|add_class:"w-full px-3 py-2 border rounded-lg" }}
+        </div>
+        <div>
+          {{ form.last_name.label_tag }}<br>
+          {{ form.last_name|add_class:"w-full px-3 py-2 border rounded-lg" }}
+        </div>
+        <div>
+          {{ form.phone.label_tag }}<br>
+          {{ form.phone|add_class:"w-full px-3 py-2 border rounded-lg" }}
+        </div>
+        <div>
+          {{ form.email.label_tag }}<br>
+          {{ form.email|add_class:"w-full px-3 py-2 border rounded-lg" }}
+        </div>
+        <div>
+          {{ form.dob.label_tag }}<br>
+          {{ form.dob|add_class:"w-full px-3 py-2 border rounded-lg" }}
+        </div>
+        <div>
+          {{ form.gender.label_tag }}<br>
+          {{ form.gender|add_class:"w-full px-3 py-2 border rounded-lg" }}
+        </div>
+        <div class="sm:col-span-2">
+          {{ form.address.label_tag }}<br>
+          {{ form.address|add_class:"w-full px-3 py-2 border rounded-lg" }}
+        </div>
+        <div class="sm:col-span-2">
+          {{ form.photo.label_tag }}<br>
+          {{ form.photo }}
+        </div>
       </div>
 
-      <div>
-        <label class="block text-gray-700 font-semibold mb-1">Date of Birth</label>
-        {{ form.dob }}
+      <!-- Fingerprint Capture -->
+      <div class="sm:col-span-2 mt-4">
+          <label class="font-semibold">Fingerprint</label><br>
+          <button type="button" id="capture-fingerprint"
+                  class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+              Place Finger & Capture
+          </button>
+          <span id="fingerprint-status" class="ml-2 text-red-600 font-medium">No fingerprint captured ❌</span>
+
+          <!-- Hidden input to store Base64 from SDK -->
+          <input type="hidden" name="fingerprint_base64" id="fingerprint_base64">
       </div>
 
-      <div>
-        <label class="block text-gray-700 font-semibold mb-1">Gender</label>
-        {{ form.gender }}
+      <div class="mt-6">
+          <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+              Save
+          </button>
       </div>
-
-      <div class="md:col-span-2">
-        <label class="block text-gray-700 font-semibold mb-1">Address</label>
-        {{ form.address }}
-      </div>
-
-      <div>
-        <label class="block text-gray-700 font-semibold mb-1">Assign Agent</label>
-        {{ form.agent }}
-      </div>
-
-      <div class="md:col-span-2">
-        <label class="block text-gray-700 font-semibold mb-1">Fingerprint</label>
-        <input type="file" name="fingerprint_file" class="w-full border px-3 py-2 rounded">
-      </div>
-
-      <div class="md:col-span-2">
-        <label class="block text-gray-700 font-semibold mb-1">Photo</label>
-        {{ form.photo }}
-      </div>
-    </div>
-
-    <div class="flex justify-end space-x-2">
-      <a href="{% url 'clients:client_list' %}" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">Cancel</a>
-      <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Save Client</button>
-    </div>
-
   </form>
 </div>
+
+<!-- Fingerprint SDK Integration (iPad) -->
+<script>
+document.getElementById("capture-fingerprint").addEventListener("click", async function() {
+    const statusEl = document.getElementById("fingerprint-status");
+
+    try {
+        // TODO: Replace this with your actual iPad SDK call
+        // Example: const fingerprintBase64 = await SDK.captureFingerprint();
+        const fingerprintBase64 = "SIMULATED_BASE64_FROM_SDK"; // placeholder
+
+        if(fingerprintBase64){
+            document.getElementById("fingerprint_base64").value = fingerprintBase64;
+            statusEl.textContent = "Fingerprint Captured ✅";
+            statusEl.classList.remove("text-red-600");
+            statusEl.classList.add("text-green-600");
+        } else {
+            statusEl.textContent = "Capture failed ❌";
+            statusEl.classList.remove("text-green-600");
+            statusEl.classList.add("text-red-600");
+        }
+    } catch (err) {
+        console.error(err);
+        statusEl.textContent = "Error capturing fingerprint ❌";
+        statusEl.classList.remove("text-green-600");
+        statusEl.classList.add("text-red-600");
+    }
+});
+</script>
 {% endblock %}

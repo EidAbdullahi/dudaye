@@ -1,5 +1,12 @@
+# accounts/models.py
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+
+GENDER_CHOICES = [
+    ("male", "Male"),
+    ("female", "Female"),
+    ("other", "Other"),
+]
 
 class User(AbstractUser):
     """
@@ -7,13 +14,13 @@ class User(AbstractUser):
     Admins can suspend users, assign roles, and manage access.
     """
     ROLE_CHOICES = [
-        ('admin', 'Administrator'),
-        ('agent', 'Agent'),
-        ('policyholder', 'Policyholder'),
-        ('claim_officer', 'Claim Officer'),
-        ('finance_officer', 'Finance Officer'),
-        ('report_officer', 'Report Officer'),
-        ('hospital', 'Hospital'),
+        ("admin", "Administrator"),
+        ("agent", "Agent"),
+        ("policyholder", "Policyholder"),
+        ("claim_officer", "Claim Officer"),
+        ("finance_officer", "Finance Officer"),
+        ("report_officer", "Report Officer"),
+        ("hospital", "Hospital"),
     ]
 
     # -------------------------
@@ -22,13 +29,20 @@ class User(AbstractUser):
     role = models.CharField(
         max_length=20,
         choices=ROLE_CHOICES,
-        default='policyholder',
+        default="policyholder",
         help_text="Role of the user in the system"
     )
     phone = models.CharField(max_length=20, blank=True, null=True)
     address = models.TextField(blank=True, null=True)
-    profile_picture = models.ImageField(upload_to='profiles/', blank=True, null=True)
-
+    profile_picture = models.ImageField(upload_to="profiles/", blank=True, null=True)
+    
+    # -------------------------
+    # Personal Information
+    # -------------------------
+    dob = models.DateField(blank=True, null=True)
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True, null=True)
+    daamiin = models.CharField(max_length=150, blank=True, null=True, help_text="Responsible person for agent")
+    
     # -------------------------
     # Status flags
     # -------------------------
@@ -53,12 +67,12 @@ class User(AbstractUser):
     def suspend(self):
         """Suspend this user (cannot log in)."""
         self.is_suspended = True
-        self.save(update_fields=['is_suspended'])
+        self.save(update_fields=["is_suspended"])
 
     def activate(self):
         """Activate (unsuspend) this user."""
         self.is_suspended = False
-        self.save(update_fields=['is_suspended'])
+        self.save(update_fields=["is_suspended"])
 
     def is_active_for_login(self):
         """

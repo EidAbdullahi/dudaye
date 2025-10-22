@@ -1,0 +1,37 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Agents | HealthInsure{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto mt-6">
+  <h2 class="text-2xl font-bold mb-4">👥 Agents</h2>
+  <table class="w-full border-collapse bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
+    <thead class="bg-gray-100 dark:bg-gray-700">
+      <tr class="text-left">
+        <th class="p-4">#</th>
+        <th class="p-4">Username</th>
+        <th class="p-4">Name</th>
+        <th class="p-4">Phone</th>
+        <th class="p-4">Email</th>
+        <th class="p-4">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for agent in agents %}
+      <tr class="border-b border-gray-200 dark:border-gray-700">
+        <td class="p-4">{{ forloop.counter }}</td>
+        <td class="p-4">{{ agent.username }}</td>
+        <td class="p-4">{{ agent.first_name }} {{ agent.last_name }}</td>
+        <td class="p-4">{{ agent.phone }}</td>
+        <td class="p-4">{{ agent.email }}</td>
+        <td class="p-4">
+          <a href="#" class="text-blue-500 hover:underline">Edit</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="p-4 text-center text-gray-500">No agents found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

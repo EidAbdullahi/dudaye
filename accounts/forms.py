@@ -2,6 +2,33 @@
 from django import forms
 from .models import User
 
+# accounts/forms.py
+from django import forms
+from django.contrib.auth.forms import UserCreationForm
+from .models import User
+
+from django import forms
+from django.contrib.auth.forms import UserCreationForm
+from .models import User
+
+class AgentRegistrationForm(UserCreationForm):
+    first_name = forms.CharField(max_length=30, required=True)
+    last_name = forms.CharField(max_length=30, required=True)
+    phone = forms.CharField(max_length=20, required=True)
+    dob = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), required=True)
+    gender = forms.ChoiceField(choices=User._meta.get_field('gender').choices, required=True)
+    address = forms.CharField(widget=forms.Textarea(attrs={'rows': 3}), required=True)
+    daamiin = forms.CharField(max_length=150, required=True)
+    profile_picture = forms.ImageField(required=False)
+
+    class Meta:
+        model = User
+        fields = [
+            "username", "first_name", "last_name", "profile_picture",
+            "phone", "dob", "gender", "address", "daamiin",
+            "password1", "password2"
+        ]
+
 class UserCreateForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class':'input-field'}))
 

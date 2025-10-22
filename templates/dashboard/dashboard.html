@@ -7,19 +7,18 @@
 <div class="p-6 space-y-8 animate-fade-in">
 
   <!-- Header -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
       <h1 class="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
         👋 Welcome back, <span class="text-blue-500">{{ user.username|title }}</span>
       </h1>
       <p class="text-gray-500 dark:text-gray-400 mt-1">Role: {{ role|title }}</p>
     </div>
-    <div class="mt-3 sm:mt-0 flex items-center gap-3">
-<a href="{% url 'accounts:logout' %}" 
-   class="mt-4 sm:mt-0 px-4 py-2 text-sm font-medium rounded-lg bg-red-500 text-white shadow hover:bg-red-600 transition">
-  Logout
-</a>
-
+    <div class="flex items-center gap-3">
+      <a href="{% url 'accounts:logout' %}" 
+         class="px-4 py-2 text-sm font-medium rounded-lg bg-red-500 text-white shadow hover:bg-red-600 transition">
+        Logout
+      </a>
     </div>
   </div>
 
@@ -77,7 +76,7 @@
     </div>
   </div>
 
-  <!-- Monthly Revenue vs Claims Trend -->
+  <!-- Revenue vs Claims Trend -->
   <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
     <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3">📈 Monthly Revenue vs Claims</h2>
     <canvas id="trendChart" height="100"></canvas>
@@ -87,7 +86,6 @@
   <div class="text-center text-sm text-gray-500 dark:text-gray-400 mt-10">
     © {{ now|date:"Y" }} <span class="font-semibold text-blue-500">HealthInsure</span>. All rights reserved.
   </div>
-
 </div>
 
 <!-- Chart.js -->
@@ -95,7 +93,7 @@
 <script>
   const baseTextColor = document.documentElement.classList.contains('dark') ? '#E5E7EB' : '#374151';
 
-  // ====== Policies Chart ======
+  // Policies Chart
   new Chart(document.getElementById('policiesChart'), {
     type: 'bar',
     data: {
@@ -109,14 +107,11 @@
     },
     options: {
       plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { color: baseTextColor } },
-        y: { ticks: { color: baseTextColor } }
-      }
+      scales: { x: { ticks: { color: baseTextColor } }, y: { ticks: { color: baseTextColor } } }
     }
   });
 
-  // ====== Claims Chart ======
+  // Claims Chart
   new Chart(document.getElementById('claimsChart'), {
     type: 'doughnut',
     data: {
@@ -128,30 +123,21 @@
       }]
     },
     options: {
-      plugins: {
-        legend: { position: 'bottom', labels: { color: baseTextColor } }
-      }
+      plugins: { legend: { position: 'bottom', labels: { color: baseTextColor } } }
     }
   });
 
-  // ====== Hospitals Chart ======
+  // Hospitals Chart
   new Chart(document.getElementById('hospitalsChart'), {
     type: 'pie',
     data: {
       labels: {{ hospitals_labels|safe }},
-      datasets: [{
-        data: {{ hospitals_data|safe }},
-        backgroundColor: ['#14B8A6', '#9CA3AF']
-      }]
+      datasets: [{ data: {{ hospitals_data|safe }}, backgroundColor: ['#14B8A6', '#9CA3AF'] }]
     },
-    options: {
-      plugins: {
-        legend: { position: 'bottom', labels: { color: baseTextColor } }
-      }
-    }
+    options: { plugins: { legend: { position: 'bottom', labels: { color: baseTextColor } } } }
   });
 
-  // ====== Trend Chart ======
+  // Trend Chart
   new Chart(document.getElementById('trendChart'), {
     type: 'line',
     data: {
@@ -177,21 +163,9 @@
     },
     options: {
       plugins: { legend: { position: 'bottom', labels: { color: baseTextColor } } },
-      scales: { 
-        x: { ticks: { color: baseTextColor } },
-        y: { ticks: { color: baseTextColor } }
-      }
+      scales: { x: { ticks: { color: baseTextColor } }, y: { ticks: { color: baseTextColor } } }
     }
   });
 </script>
 
-<style>
-  @keyframes fade-in {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .animate-fade-in {
-    animation: fade-in 0.5s ease-out;
-  }
-</style>
 {% endblock %}

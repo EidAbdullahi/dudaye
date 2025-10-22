@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>{% block title %}Dashboard{% endblock %}</title>
+  <title>{% block title %}Dashboard | HealthInsure{% endblock %}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- Tailwind CSS -->
@@ -15,6 +15,12 @@
   <style>
     body { font-family: 'Inter', sans-serif; }
     .sidebar-link.active { background-color: #3b82f6; color: white; }
+    .animate-fade-in { animation: fade-in 0.5s ease-out; }
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .sidebar-scroll { overflow-y: auto; flex: 1; }
   </style>
 
   {% block extra_head %}{% endblock %}
@@ -30,57 +36,70 @@
       </h2>
     </div>
 
-    <nav class="flex-1 p-4 space-y-2">
+    <nav class="sidebar-scroll p-4 space-y-2">
 
-      <!-- 🏠 Dashboard -->
-      {% if user.role == 'hospital' %}
-        <a href="{% url 'hospitals:dashboard' %}"
-           class="sidebar-link flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700
-           {% if '/hospitals/dashboard' in request.path %}active{% endif %}">
-          🏥 <span>Hospital Dashboard</span>
-        </a>
-      {% else %}
-        <a href="{% url 'accounts:dashboard' %}"
-           class="sidebar-link flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700
-           {% if '/accounts/dashboard' in request.path %}active{% endif %}">
-          🏠 <span>Main Dashboard</span>
-        </a>
-      {% endif %}
+      <!-- Admin Sidebar -->
+      {% if user.is_superuser or user.role == 'admin' %}
+      <a href="{% url 'accounts:dashboard' %}"
+         class="sidebar-link flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700
+         {% if '/accounts/dashboard/' in request.path %}active{% endif %}">
+        🏠 <span>Admin Dashboard</span>
+      </a>
 
+      <a href="{% url 'accounts:user_list' %}"
+         class="sidebar-link flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700
+         {% if '/accounts/users/' in request.path %}active{% endif %}">
+        👥 Manage Users
+      </a>
 
-      <!-- 👥 Clients -->
-      {% if user.is_superuser or user.role in 'admin agent' %}
+      <a href="{% url 'accounts:agent_list' %}"
+         class="sidebar-link flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-green-500 hover:text-white transition
+         {% if '/accounts/agents/' in request.path %}active{% endif %}">
+        ➕ Agents
+      </a>
+
       <a href="{% url 'clients:client_list' %}"
          class="sidebar-link flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700
          {% if '/clients/' in request.path %}active{% endif %}">
-        👥 <span>Clients</span>
+        👥 Clients
       </a>
-      {% endif %}
 
-      <!-- 📄 Policies -->
-      {% if user.is_superuser or user.role in 'admin finance_officer' %}
       <a href="{% url 'policies:policy_list' %}"
          class="sidebar-link flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700
          {% if '/policies/' in request.path %}active{% endif %}">
-        📄 <span>Policies</span>
+        📄 Policies
       </a>
-      {% endif %}
 
-      <!-- 💰 Claims -->
-      {% if user.is_superuser or user.role in 'admin claim_officer finance_officer hospital agent' %}
       <a href="{% url 'claims:claim_list' %}"
          class="sidebar-link flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700
          {% if '/claims/' in request.path %}active{% endif %}">
-        💰 <span>Claims</span>
+        💰 Claims
+      </a>
+
+      <a href="{% url 'hospitals:hospital_list' %}"
+         class="sidebar-link flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700
+         {% if '/hospitals/' in request.path %}active{% endif %}">
+        🏥 Hospitals
       </a>
       {% endif %}
 
-      <!-- 🏥 Hospitals -->
-      {% if user.is_superuser or user.role == 'admin' %}
-      <a href="{% url 'hospitals:hospital_list' %}"
+      <!-- Agent Sidebar -->
+      {% if user.role == 'agent' %}
+      <a href="{% url 'accounts:agent_dashboard' %}"
          class="sidebar-link flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700
-         {% if '/hospitals/' in request.path and not '/dashboard/' in request.path %}active{% endif %}">
-        🏥 <span>Hospitals</span>
+         {% if '/accounts/agent/dashboard/' in request.path %}active{% endif %}">
+        🏠 <span>Agent Dashboard</span>
+      </a>
+
+      <a href="{% url 'clients:client_list' %}"
+         class="sidebar-link flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-700
+         {% if '/clients/' in request.path %}active{% endif %}">
+        👥 Clients
+      </a>
+
+      <a href="{% url 'clients:add_client' %}"
+         class="sidebar-link flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-green-500 hover:text-white transition">
+        ➕ Register Client
       </a>
       {% endif %}
 
@@ -95,13 +114,11 @@
   </aside>
 
   <!-- Main Content -->
-  <div class="flex-1 ml-64">
+  <div class="flex-1 ml-64 min-h-screen">
 
     <!-- Header -->
     <header class="bg-white dark:bg-gray-800 shadow p-5 flex justify-between items-center sticky top-0 z-10">
-      <h1 class="text-2xl font-bold">
-        {% block header_title %}{{ dashboard_title }}{% endblock %}
-      </h1>
+      <h1 class="text-2xl font-bold">{% block header_title %}{{ dashboard_title }}{% endblock %}</h1>
       <div class="flex items-center gap-4">
         <span class="text-gray-600 dark:text-gray-300">
           👋 Hello, <strong>{{ user.username }}</strong> ({{ user.role|capfirst }})
@@ -110,10 +127,7 @@
     </header>
 
     <!-- Page Content -->
-    <main class="p-8 space-y-6">
-      {% block content %}
-      {% endblock %}
-    </main>
+    <main class="p-8 space-y-6">{% block content %}{% endblock %}</main>
   </div>
 
   {% block extra_scripts %}{% endblock %}

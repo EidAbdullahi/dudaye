@@ -2,12 +2,17 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 
-
 class Client(models.Model):
     GENDER_CHOICES = [
         ("male", "Male"),
         ("female", "Female"),
         ("other", "Other"),
+    ]
+    
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("verified", "Verified"),
+        ("failed", "Failed"),
     ]
 
     first_name = models.CharField(max_length=50)
@@ -18,7 +23,14 @@ class Client(models.Model):
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True, null=True)
     address = models.TextField(blank=True, null=True)
     photo = models.ImageField(upload_to="clients/photos/", blank=True, null=True)
+    
+    # Store Base64 template from fingerprint SDK
     fingerprint_data = models.BinaryField(blank=True, null=True, editable=False)
+    fingerprint_verified = models.BooleanField(default=False)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+
+    # Optional: if you want to support multiple templates per client in the future
+    # fingerprint_template_version = models.IntegerField(default=1)
 
     registered_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -38,10 +50,10 @@ class Client(models.Model):
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)  # 🕒 new field for updates
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["-created_at"]  # newest first
+        ordering = ["-created_at"]
         verbose_name = "Client"
         verbose_name_plural = "Clients"
 
@@ -50,7 +62,6 @@ class Client(models.Model):
 
     @property
     def age(self):
-        """Calculate age automatically."""
         if self.dob:
             today = timezone.now().date()
             return today.year - self.dob.year - (
