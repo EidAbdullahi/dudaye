@@ -1,103 +1,125 @@
 {% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block title %}{{ dashboard_title }} | Health Insurance{% endblock %}
+
 {% block content %}
-<div class="max-w-3xl mx-auto bg-white shadow-lg rounded-xl p-8 space-y-6">
-  <h1 class="text-2xl font-bold text-gray-800 mb-4">{{ dashboard_title }}</h1>
+<div class="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-lg mt-8">
+
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">{{ dashboard_title }}</h1>
+    <a href="{% url 'policies:policy_list' %}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+      ⬅ Back to Policies
+    </a>
+  </div>
 
   {% if messages %}
-    <div class="mb-4">
-      {% for message in messages %}
-        <div 
-          class="px-4 py-2 rounded mb-2 
-          {% if message.tags == 'error' %}bg-red-100 text-red-700{% endif %}
-          {% if message.tags == 'success' %}bg-green-100 text-green-700{% endif %}">
-          {{ message }}
-        </div>
-      {% endfor %}
-    </div>
+    {% for message in messages %}
+      <div class="mb-4 px-4 py-2 rounded {{ message.tags|default:'bg-gray-100 text-gray-800' }}">
+        {{ message }}
+      </div>
+    {% endfor %}
   {% endif %}
 
-  <form method="POST" class="space-y-5">
+  <form method="POST" class="space-y-4">
     {% csrf_token %}
 
-    <!-- Client Selection -->
-    <div>
-      <label class="block text-sm font-semibold text-gray-600">Client</label>
-      <select name="client" required
-              class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-        <option value="">Select Client</option>
-        {% for client in clients %}
-          <option value="{{ client.id }}" 
-            {% if policy and policy.client.id == client.id %}selected{% endif %}>
-            {{ client.first_name }} {{ client.last_name }}
-          </option>
-        {% endfor %}
-      </select>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <!-- Policy Number -->
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1">Policy Number</label>
+        <input type="text" name="policy_number" required
+               value="{{ policy.policy_number|default:auto_policy_number }}"
+               class="w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500">
+      </div>
+
+      <!-- Policy Type -->
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1">Type</label>
+        <select name="policy_type" required class="w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500">
+          <option value="">Select Type</option>
+          {% for key, label in policy_types %}
+            <option value="{{ key }}" {% if policy and policy.policy_type == key %}selected{% endif %}>
+              {{ label }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Premium -->
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1">Premium</label>
+        <input type="number" name="premium" step="0.01" required
+               value="{{ policy.premium|default:'' }}"
+               class="w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500">
+      </div>
+
+      <!-- Client -->
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1">Client</label>
+        <select name="client" required class="w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500">
+          <option value="">Select Client</option>
+          {% for client in clients %}
+            <option value="{{ client.id }}" {% if policy and policy.client.id == client.id %}selected{% endif %}>
+              {{ client.first_name }} {{ client.last_name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Start Date -->
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1">Start Date</label>
+        <input type="date" name="start_date" required
+               value="{{ policy.start_date|default:today }}"
+               class="w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500">
+      </div>
+
+      <!-- Expiry Date -->
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1">Expiry Date</label>
+        <input type="date" name="expiry_date" required
+               value="{{ policy.expiry_date|default:next_year }}"
+               class="w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500">
+      </div>
+
+      <!-- Active -->
+      <div class="flex items-center space-x-4 mt-2">
+        <input type="checkbox" name="is_active" id="active" class="h-5 w-5 text-green-600"
+               {% if policy and policy.is_active %}checked{% endif %}>
+        <label for="active" class="text-gray-700 font-medium">Active</label>
+      </div>
+
+      <!-- Coverage Details -->
+      <div class="md:col-span-2">
+        <label class="block text-gray-700 font-semibold mb-1">Coverage Details</label>
+        <textarea name="coverage_details" rows="4"
+                  class="w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Example: Hospitalization, Dental, Maternity...">{{ policy.coverage_details|default:'' }}</textarea>
+      </div>
+
+      <!-- Max Claim Limit -->
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1">Max Claim Limit</label>
+        <input type="number" name="max_claim_limit" step="0.01"
+               value="{{ policy.max_claim_limit|default:0 }}"
+               class="w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500">
+      </div>
+
+      <!-- Waiting Period -->
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1">Waiting Period (days)</label>
+        <input type="number" name="waiting_period_days"
+               value="{{ policy.waiting_period_days|default:0 }}"
+               class="w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500">
+      </div>
+
     </div>
 
-    <!-- Policy Number (auto-generate if empty) -->
-    <div>
-      <label class="block text-sm font-semibold text-gray-600">Policy Number</label>
-      <input type="text" name="policy_number" 
-             value="{{ policy.policy_number|default:auto_policy_number }}"
-             class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-             readonly>
-      <p class="text-xs text-gray-500 mt-1">Policy number is automatically generated and unique.</p>
-    </div>
-
-    <!-- Policy Type -->
-    <div>
-      <label class="block text-sm font-semibold text-gray-600">Policy Type</label>
-      <select name="type" required
-              class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-        {% for key, value in policy_types %}
-          <option value="{{ key }}"
-            {% if policy and policy.type == key %}selected{% endif %}>
-            {{ value }}
-          </option>
-        {% endfor %}
-      </select>
-    </div>
-
-    <!-- Start Date -->
-    <div>
-      <label class="block text-sm font-semibold text-gray-600">Start Date</label>
-      <input type="date" name="start_date" required
-             value="{{ policy.start_date|default:'' }}"
-             class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-    </div>
-
-    <!-- End Date -->
-    <div>
-      <label class="block text-sm font-semibold text-gray-600">End Date</label>
-      <input type="date" name="end_date" required
-             value="{{ policy.end_date|default:'' }}"
-             class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-    </div>
-
-    <!-- Premium -->
-    <div>
-      <label class="block text-sm font-semibold text-gray-600">Premium (USD)</label>
-      <input type="number" step="0.01" name="premium" required
-             value="{{ policy.premium|default:'' }}"
-             class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-    </div>
-
-    <!-- Active Checkbox -->
-    <div class="flex items-center space-x-2">
-      <input type="checkbox" name="active" id="active" class="w-4 h-4 text-blue-600"
-        {% if policy and policy.active %}checked{% endif %}>
-      <label for="active" class="text-sm text-gray-700">Active</label>
-    </div>
-
-    <!-- Form Actions -->
-    <div class="flex justify-end space-x-3">
-      <a href="{% url 'policies:policy_list' %}"
-         class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Cancel</a>
-      <button type="submit"
-              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-        {% if policy %}Update Policy{% else %}Add Policy{% endif %}
-      </button>
-    </div>
+    <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+      💾 Save Policy
+    </button>
   </form>
 </div>
 {% endblock %}

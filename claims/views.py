@@ -12,14 +12,11 @@ from hospitals.models import Hospital
 from accounts.utils import roles_required
 
 
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.shortcuts import render, redirect
-from .models import Claim
-
-
-
-@login_required(login_url="accounts:login")
+# -----------------------
+# 🏥 Hospital Claim Dashboard
+# -----------------------
+@login_required
+@roles_required("hospital")
 def hospital_claim_dashboard(request):
     """Dashboard for hospitals to view and manage their submitted claims."""
     user = request.user
@@ -29,7 +26,6 @@ def hospital_claim_dashboard(request):
         messages.error(request, "Hospital profile not found.")
         return redirect("accounts:dashboard")
 
-    # Stats
     total_claims = Claim.objects.filter(hospital=hospital).count()
     pending_claims = Claim.objects.filter(hospital=hospital, status="pending").count()
     approved_claims = Claim.objects.filter(hospital=hospital, status="approved").count()
@@ -51,16 +47,10 @@ def hospital_claim_dashboard(request):
 
 
 # -----------------------
-# 🧩 Claim List
+# 🧩 Claim List (all roles)
 # -----------------------
 @login_required
 def claim_list(request):
-    """
-    Displays claim lists based on user role.
-    - Admin/Claim Officer: All claims.
-    - Hospital: Claims submitted by that hospital.
-    - Agent: Claims for their clients.
-    """
     user = request.user
     role = getattr(user, "role", None)
 
@@ -91,9 +81,7 @@ def claim_list(request):
 @login_required
 @roles_required("hospital")
 def add_claim(request):
-    """
-    Allows hospitals to submit a new claim for a client with an active policy.
-    """
+    """Hospitals submit a new claim for a client with an active policy."""
     user = request.user
     hospital = getattr(user, "hospital_profile", None)
 
@@ -109,7 +97,7 @@ def add_claim(request):
 
         if client_id and policy_id and amount:
             client = get_object_or_404(Client, pk=client_id)
-            policy = get_object_or_404(Policy, pk=policy_id, active=True)
+            policy = get_object_or_404(Policy, pk=policy_id, is_active=True)
 
             claim_number = f"CLM-{timezone.now().strftime('%Y%m%d%H%M%S')}"
             Claim.objects.create(
@@ -128,7 +116,7 @@ def add_claim(request):
             messages.error(request, "All fields are required.")
 
     clients = Client.objects.all()
-    policies = Policy.objects.filter(active=True)
+    policies = Policy.objects.filter(is_active=True)
 
     return render(request, "claims/add_claim.html", {
         "dashboard_title": "Submit New Claim",
@@ -143,9 +131,6 @@ def add_claim(request):
 @login_required
 @roles_required("admin", "claim_officer")
 def edit_claim(request, pk):
-    """
-    Admin or claim officer can update claim details.
-    """
     claim = get_object_or_404(Claim, pk=pk)
 
     if request.method == "POST":
@@ -164,30 +149,25 @@ def edit_claim(request, pk):
 
 
 # -----------------------
-# 🔍 Claim Detail View
-# Example for claim_detail view
+# 🔍 Claim Detail
+# -----------------------
 @login_required
 def claim_detail(request, pk):
     claim = get_object_or_404(Claim, pk=pk)
     user = request.user
     role = getattr(user, "role", None)
 
-    # Treat superusers as admins
     if user.is_superuser:
         role = "admin"
-
-    # Hospital can only view its own claims
     elif role == "hospital":
         hospital = getattr(user, "hospital_profile", None)
         if not hospital or claim.hospital != hospital:
             messages.error(request, "You are not authorized to view this claim.")
             return redirect("claims:claim_list")
-
     elif role == "agent":
         if claim.client.agent != user:
             messages.error(request, "You are not authorized to view this claim.")
             return redirect("claims:claim_list")
-
     elif role not in ["admin", "claim_officer"]:
         messages.error(request, "Access denied.")
         return redirect("claims:claim_list")
@@ -197,16 +177,7 @@ def claim_detail(request, pk):
         "dashboard_title": f"Claim Details - {claim.claim_number}",
         "role": role,
     })
-@roles_required("admin")
-def reimburse_claim(request, pk):
-    claim = get_object_or_404(Claim, pk=pk)
-    if claim.status != "approved":
-        messages.error(request, "Only approved claims can be reimbursed.")
-    else:
-        claim.status = "reimbursed"
-        claim.save()
-        messages.success(request, f"Claim {claim.claim_number} marked as reimbursed.")
-    return redirect("claims:claim_list")
+
 
 # -----------------------
 # ✅ Approve Claim
@@ -215,12 +186,12 @@ def reimburse_claim(request, pk):
 @roles_required("admin", "claim_officer")
 def approve_claim(request, pk):
     claim = get_object_or_404(Claim, pk=pk)
-    if claim.status == "approved":
-        messages.info(request, f"Claim {claim.claim_number} is already approved.")
-    else:
+    if claim.status != "approved":
         claim.status = "approved"
         claim.save()
         messages.success(request, f"Claim {claim.claim_number} approved successfully.")
+    else:
+        messages.info(request, f"Claim {claim.claim_number} is already approved.")
     return redirect("claims:claim_detail", pk=pk)
 
 
@@ -231,12 +202,12 @@ def approve_claim(request, pk):
 @roles_required("admin", "claim_officer")
 def reject_claim(request, pk):
     claim = get_object_or_404(Claim, pk=pk)
-    if claim.status == "rejected":
-        messages.info(request, f"Claim {claim.claim_number} is already rejected.")
-    else:
+    if claim.status != "rejected":
         claim.status = "rejected"
         claim.save()
         messages.warning(request, f"Claim {claim.claim_number} rejected.")
+    else:
+        messages.info(request, f"Claim {claim.claim_number} is already rejected.")
     return redirect("claims:claim_detail", pk=pk)
 
 
@@ -247,12 +218,12 @@ def reject_claim(request, pk):
 @roles_required("admin")
 def reimburse_claim(request, pk):
     claim = get_object_or_404(Claim, pk=pk)
-    if claim.status != "approved":
-        messages.error(request, "Only approved claims can be reimbursed.")
-    else:
+    if claim.status == "approved":
         claim.status = "reimbursed"
         claim.save()
         messages.success(request, f"Claim {claim.claim_number} marked as reimbursed.")
+    else:
+        messages.error(request, "Only approved claims can be reimbursed.")
     return redirect("claims:claim_detail", pk=pk)
 
 
@@ -260,9 +231,6 @@ def reimburse_claim(request, pk):
 # 🌐 DRF API
 # -----------------------
 class ClaimViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint for claims, filtered by user role.
-    """
     queryset = Claim.objects.all()
     serializer_class = ClaimSerializer
     permission_classes = [permissions.IsAuthenticated]

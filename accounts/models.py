@@ -1,4 +1,3 @@
-# accounts/models.py
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -23,9 +22,6 @@ class User(AbstractUser):
         ("hospital", "Hospital"),
     ]
 
-    # -------------------------
-    # Core fields
-    # -------------------------
     role = models.CharField(
         max_length=20,
         choices=ROLE_CHOICES,
@@ -34,26 +30,16 @@ class User(AbstractUser):
     )
     phone = models.CharField(max_length=20, blank=True, null=True)
     address = models.TextField(blank=True, null=True)
-    profile_picture = models.ImageField(upload_to="profiles/", blank=True, null=True)
-    
-    # -------------------------
-    # Personal Information
-    # -------------------------
+    profile_picture = models.ImageField(
+        upload_to="profiles/", blank=True, null=True, default="profiles/default.png"
+    )
     dob = models.DateField(blank=True, null=True)
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True, null=True)
-    daamiin = models.CharField(max_length=150, blank=True, null=True, help_text="Responsible person for agent")
-    
-    # -------------------------
-    # Status flags
-    # -------------------------
-    is_suspended = models.BooleanField(
-        default=False,
-        help_text="Designates whether this user is suspended."
+    daamiin = models.CharField(
+        max_length=150, blank=True, null=True, help_text="Responsible person for agent"
     )
+    is_suspended = models.BooleanField(default=False, help_text="Designates whether this user is suspended.")
 
-    # -------------------------
-    # String representation
-    # -------------------------
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"
 
@@ -61,34 +47,24 @@ class User(AbstractUser):
         verbose_name = "User"
         verbose_name_plural = "Users"
 
-    # =========================
-    # 🛠️ Admin utility methods
-    # =========================
+    # -------------------------
+    # Helpers
+    # -------------------------
     def suspend(self):
-        """Suspend this user (cannot log in)."""
         self.is_suspended = True
         self.save(update_fields=["is_suspended"])
 
     def activate(self):
-        """Activate (unsuspend) this user."""
         self.is_suspended = False
         self.save(update_fields=["is_suspended"])
 
     def is_active_for_login(self):
-        """
-        Check if the user can log in.
-        Returns True only if the user is active and not suspended.
-        """
         return self.is_active and not self.is_suspended
 
-    # =========================
-    # 🧠 Smart Default Logic
-    # =========================
+    # -------------------------
+    # Auto-correct role for superuser
+    # -------------------------
     def save(self, *args, **kwargs):
-        """
-        Automatically assign the correct role for superusers.
-        Ensures no superuser is incorrectly labeled as 'Policyholder'.
-        """
         if self.is_superuser and self.role != "admin":
             self.role = "admin"
         super().save(*args, **kwargs)

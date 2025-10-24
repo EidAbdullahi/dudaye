@@ -4,10 +4,15 @@ from . import views
 
 app_name = 'policies'  # For namespacing in templates
 
-# DRF router for API
+# =========================
+# DRF API router
+# =========================
 router = routers.DefaultRouter()
 router.register(r'policies', views.PolicyViewSet, basename='policy')
 
+# =========================
+# URL patterns
+# =========================
 urlpatterns = [
     # Web views
     path('', views.policy_list, name='policy_list'),               # List all policies

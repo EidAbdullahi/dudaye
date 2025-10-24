@@ -16,19 +16,18 @@ from hospitals.models import Hospital
 from .serializers import UserSerializer
 from accounts.utils import roles_required
 
-
-# ============================================================
+# ==============================
 # 🌐 API ViewSet
-# ============================================================
+# ==============================
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
 
 
-# ============================================================
+# ==============================
 # 🔐 LOGIN / LOGOUT
-# ============================================================
+# ==============================
 def login_view(request):
     """Authenticate user and redirect based on role"""
     if request.user.is_authenticated:
@@ -40,17 +39,17 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
 
         if user:
-            if not user.is_active or getattr(user, "is_suspended", False):
+            if not user.is_active_for_login():
                 messages.error(request, "Your account is inactive or suspended.")
             else:
                 login(request, user)
                 messages.success(request, f"Welcome back, {user.username}!")
                 # Redirect based on role
-                if user.role == "hospital":
-                    return redirect("claims:hospital_claim_dashboard")
-                elif user.role == "agent":
-                    return redirect("accounts:agent_dashboard")
-                return redirect("accounts:dashboard")
+                role_redirect = {
+                    "hospital": "claims:hospital_claim_dashboard",
+                    "agent": "accounts:agent_dashboard",
+                }
+                return redirect(role_redirect.get(user.role, "accounts:dashboard"))
         else:
             messages.error(request, "Invalid username or password.")
 
@@ -64,28 +63,28 @@ def logout_view(request):
     return redirect("accounts:login")
 
 
-# ============================================================
+# ==============================
 # 🧭 DASHBOARD
-# ============================================================
+# ==============================
 @login_required(login_url="accounts:login")
 def dashboard(request):
-    """Admin dashboard view"""
-    if request.user.role == "agent":
-        # Agents cannot access admin dashboard
+    """Admin / finance dashboard"""
+    user = request.user
+
+    # Redirect agents to their dashboard
+    if user.role == "agent":
         return redirect("accounts:agent_dashboard")
 
-    user = request.user
     role = getattr(user, "role", "guest")
 
     # === Stats Cards ===
     total_clients = Client.objects.count()
-    active_policies = Policy.objects.filter(active=True).count()
+    active_policies = Policy.objects.filter(is_active=True).count()
     total_claims = Claim.objects.count()
     total_hospitals = Hospital.objects.count()
-    total_revenue = (
-        Claim.objects.filter(status__in=["approved", "reimbursed"])
-        .aggregate(total=Coalesce(Sum(F("amount"), output_field=FloatField()), 0.0))["total"]
-    )
+    total_revenue = Claim.objects.filter(status__in=["approved", "reimbursed"]).aggregate(
+        total=Coalesce(Sum(F("amount"), output_field=FloatField()), 0.0)
+    )["total"]
 
     cards = [
         {"label": "Clients", "value": total_clients, "color": "blue"},
@@ -107,9 +106,9 @@ def dashboard(request):
             {"name": "➕ Add Agent", "url": "/accounts/agents/register/", "color": "green"},
         ]
 
-    # === Chart Data ===
-    policies_labels = list(Policy.objects.values_list("type", flat=True).distinct())
-    policies_data = [Policy.objects.filter(type=t).count() for t in policies_labels]
+    # === Charts ===
+    policies_labels = list(Policy.objects.values_list("policy_type", flat=True).distinct())
+    policies_data = [Policy.objects.filter(policy_type=t).count() for t in policies_labels]
 
     claims_labels = ["Pending", "Approved", "Rejected"]
     claims_data = [
@@ -143,10 +142,9 @@ def dashboard(request):
 @login_required(login_url="accounts:login")
 def agent_dashboard(request):
     """Agent-only dashboard"""
-    if request.user.role != "agent":
-        return redirect("accounts:dashboard")
-
     user = request.user
+    if user.role != "agent":
+        return redirect("accounts:dashboard")
 
     cards = [
         {"label": "My Clients", "value": Client.objects.filter(agent=user).count(), "color": "blue"},
@@ -165,9 +163,9 @@ def agent_dashboard(request):
     return render(request, "dashboard/agent_dashboard.html", context)
 
 
-# ============================================================
+# ==============================
 # 👥 USER MANAGEMENT
-# ============================================================
+# ==============================
 @login_required(login_url="accounts:login")
 def user_list(request):
     if not request.user.is_superuser and getattr(request.user, "role", "") != "admin":
@@ -191,9 +189,9 @@ def toggle_user_status(request, user_id):
     return redirect("accounts:user_list")
 
 
-# ============================================================
+# ==============================
 # ➕ AGENT MANAGEMENT
-# ============================================================
+# ==============================
 @login_required(login_url="accounts:login")
 @roles_required("admin")
 def register_agent(request):
@@ -210,11 +208,7 @@ def register_agent(request):
     else:
         form = AgentRegistrationForm()
 
-    return render(
-        request,
-        "accounts/register_agent.html",
-        {"form": form, "dashboard_title": "Register New Agent"},
-    )
+    return render(request, "accounts/register_agent.html", {"form": form, "dashboard_title": "Register New Agent"})
 
 
 @login_required(login_url="accounts:login")

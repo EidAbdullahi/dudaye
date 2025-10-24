@@ -1,22 +1,81 @@
-<div class="space-y-4">
-  <a href="{% url 'dashboard' %}" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded-lg">
-    <i data-lucide="home" class="w-5 h-5"></i> Dashboard
-  </a>
-  {% if user.role == 'admin' %}
-  <a href="/dashboard/clients/" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded-lg">
-    <i data-lucide="users" class="w-5 h-5"></i> Clients
-  </a>
-  <a href="/dashboard/policies/" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded-lg">
-    <i data-lucide="file-text" class="w-5 h-5"></i> Policies
-  </a>
-  <a href="/dashboard/claims/" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded-lg">
-    <i data-lucide="clipboard" class="w-5 h-5"></i> Claims
-  </a>
-  <a href="/dashboard/hospitals/" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded-lg">
-    <i data-lucide="home" class="w-5 h-5"></i> Hospitals
-  </a>
-  <a href="/accounts/users/" class="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded-lg">
-    <i data-lucide="user-check" class="w-5 h-5"></i> Users
-  </a>
-  {% endif %}
-</div>
+{% load static %}
+
+<!-- Sidebar -->
+<aside class="w-64 bg-white dark:bg-gray-800 h-screen shadow-lg flex flex-col fixed">
+  <!-- Logo -->
+  <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+    <h2 class="text-2xl font-bold text-blue-600">
+      Health<span class="text-gray-800 dark:text-gray-100">Insure</span>
+    </h2>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="flex-1 p-4 space-y-2 sidebar-scroll">
+
+    <!-- Dashboard Link (All Roles) -->
+    {% if user.role == 'hospital' %}
+      <a href="{% url 'hospitals:dashboard' %}" 
+         class="sidebar-link flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 {% if '/hospitals/dashboard/' in request.path %}bg-gray-200{% endif %}">
+        🏥 Dashboard
+      </a>
+      <a href="{% url 'claims:hospital_claim_dashboard' %}" 
+         class="sidebar-link flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 {% if '/claims/hospital-dashboard/' in request.path %}bg-gray-200{% endif %}">
+        💰 My Claims
+      </a>
+      <a href="{% url 'claims:add_claim' %}" 
+         class="sidebar-link flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-green-500 hover:text-white transition">
+        ➕ Submit Claim
+      </a>
+
+    {% elif user.role == 'agent' %}
+      <a href="{% url 'accounts:agent_dashboard' %}" 
+         class="sidebar-link flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 {% if '/accounts/agent/dashboard/' in request.path %}bg-gray-200{% endif %}">
+        👤 Dashboard
+      </a>
+      <a href="{% url 'clients:client_list' %}" 
+         class="sidebar-link flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 {% if '/clients/' in request.path %}bg-gray-200{% endif %}">
+        👥 Clients
+      </a>
+      <a href="{% url 'clients:add_client' %}" 
+         class="sidebar-link flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-green-500 hover:text-white transition">
+        ➕ Register Client
+      </a>
+
+    {% else %}
+      <!-- Admin / Superuser -->
+      <a href="{% url 'accounts:dashboard' %}" 
+         class="sidebar-link flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 {% if '/accounts/dashboard/' in request.path %}bg-gray-200{% endif %}">
+        🏠 Dashboard
+      </a>
+      <a href="{% url 'clients:client_list' %}" 
+         class="sidebar-link flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 {% if '/clients/' in request.path %}bg-gray-200{% endif %}">
+        👥 Clients
+      </a>
+      <a href="{% url 'policies:policy_list' %}" 
+         class="sidebar-link flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 {% if '/policies/' in request.path %}bg-gray-200{% endif %}">
+        📄 Policies
+      </a>
+      <a href="{% url 'claims:claim_list' %}" 
+         class="sidebar-link flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 {% if '/claims/' in request.path %}bg-gray-200{% endif %}">
+        💰 Claims
+      </a>
+      <a href="{% url 'hospitals:hospital_list' %}" 
+         class="sidebar-link flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 {% if '/hospitals/' in request.path %}bg-gray-200{% endif %}">
+        🏥 Hospitals
+      </a>
+      <a href="{% url 'accounts:user_list' %}" 
+         class="sidebar-link flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 {% if '/accounts/users/' in request.path %}bg-gray-200{% endif %}">
+        👤 Users
+      </a>
+    {% endif %}
+
+  </nav>
+
+  <!-- Logout -->
+  <div class="p-4 border-t border-gray-200 dark:border-gray-700">
+    <a href="{% url 'accounts:logout' %}" 
+       class="block text-center bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg transition">
+      Logout
+    </a>
+  </div>
+</aside>

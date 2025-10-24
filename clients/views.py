@@ -238,3 +238,5 @@ class ClientViewSet(viewsets.ModelViewSet):
                 "fingerprint_verified": client.fingerprint_verified
             })
         return Response({"success": False}, status=status.HTTP_404_NOT_FOUND)
+
+
